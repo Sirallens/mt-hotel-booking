@@ -80,5 +80,11 @@ class HBS_Emails {
             <tr><th><?php _e('Niños', 'hotel-booking-system'); ?></th><td><?php echo intval($data['kids']); ?></td></tr>
             <tr><th><?php _e('Total Estancia (MXN)', 'hotel-booking-system'); ?></th><td><?php echo number_format($data['total_price'], 2); ?></td></tr>
         </table>
-        <p><strong><?php _e('Nota:', 'hotel-booking-system'); ?>
+        <p><strong><?php _e('Nota:', 'hotel-booking-system'); ?></strong>
+        <?php echo isset($opts['guest_email_note']) ? esc_html($opts['guest_email_note']) : ''; ?></p>
+        <p><?php _e('Nos pondremos en contacto con usted pronto para confirmar la disponibilidad y los siguientes pasos.', 'hotel-booking-system'); ?></p>
+        <p><?php _e('Gracias por elegir Altavista Hotel.', 'hotel-booking-system'); ?></p>
+            <?php
+            return ob_get_clean();
     }
+}   

@@ -1,5 +1,4 @@
 <?php
-<?php
 /**
  * Public (frontend) functionality for Altavista Hotel Booking System.
  *
