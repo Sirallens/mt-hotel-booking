@@ -1,0 +1,149 @@
+/* ==== Formulario de Reservación ==== */
+.hbs-form {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  font-family: Arial, sans-serif;
+}
+
+.hbs-form h3 {
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+  color: #333;
+}
+
+.hbs-form label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.hbs-form input[type="text"],
+.hbs-form input[type="email"],
+.hbs-form input[type="tel"],
+.hbs-form input[type="number"],
+.hbs-form input[type="date"],
+.hbs-form input[type="url"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 5px;
+  box-sizing: border-box;
+}
+
+.hbs-form input[type="checkbox"],
+.hbs-form input[type="radio"] {
+  margin-right: 6px;
+}
+
+.hbs-form button[type="submit"] {
+  display: inline-block;
+  background: #0073aa;
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s ease;
+}
+
+.hbs-form button[type="submit"]:hover {
+  background: #005f8d;
+}
+
+/* ==== Tabla de desglose de precios ==== */
+.hbs-breakdown {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.hbs-breakdown td,
+.hbs-breakdown th {
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.hbs-breakdown th {
+  background: #f4f4f4;
+}
+
+.hbs-breakdown tr:last-child th,
+.hbs-breakdown tr:last-child td {
+  font-size: 1.1rem;
+  font-weight: bold;
+  background: #e7f5ff;
+}
+
+/* ==== Mensajes ==== */
+#hbs-form-message {
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+#hbs-form-message.success {
+  background: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #badbcc;
+}
+
+#hbs-form-message.error {
+  background: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
+
+/* ==== Formulario Flotante (Desktop >1024px) ==== */
+#hbs-floating-form {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  #hbs-floating-form {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    background: #fff;
+    border-top: 2px solid #0073aa;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.15);
+    z-index: 9999;
+    display: block;
+  }
+
+  #hbs-floating-form form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #hbs-floating-form input,
+  #hbs-floating-form button {
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+
+  #hbs-floating-form button {
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  #hbs-floating-form button:hover {
+    background: #005f8d;
+  }
+}

@@ -1,0 +1,43 @@
+# Traducciones base para hotel-booking-system
+msgid ""
+msgstr ""
+"Project-Id-Version: Altavista Hotel Booking System 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-13 00:00+0000\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: WP-CLI i18n\n"
+
+#: admin/class-hbs-admin.php:20
+msgid "Hotel Booking"
+msgstr ""
+
+#: public/class-hbs-public.php:45
+msgid "Solicitud de reservación"
+msgstr ""
+
+#: includes/class-hbs-emails.php:18
+msgid "[Nueva Reservación] Solicitud #%d - %s"
+msgstr ""
+
+#: includes/class-hbs-emails.php:44
+msgid "Confirmación de Solicitud de Reservación #%d - Altavista Hotel"
+msgstr ""
+
+#: assets/js/hotel-booking.js:40
+msgid "Ocurrió un error, inténtalo de nuevo."
+msgstr ""
+
+msgid "Solicitud de reservación"
+msgstr "Reservation Request"
+
+msgid "Habitación Sencilla"
+msgstr "Single Room"
+
+msgid "Habitación Doble"
+msgstr "Double Room"
+
+msgid "Total Estancia (MXN)"
+msgstr "Total Stay (MXN)"
