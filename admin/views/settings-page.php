@@ -90,6 +90,16 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                         value="<?php echo esc_attr(!empty($opts['main_color_text']) ? $opts['main_color_text'] : '#334155'); ?>"
                         class="hbs-color-field" data-default-color="#334155"></td>
             </tr>
+            <tr>
+                <th scope="row"><?php esc_html_e('Texto Botón Enviar', 'hotel-booking-system'); ?></th>
+                <td><input type="text" name="submit_btn_text"
+                        value="<?php echo esc_attr(!empty($opts['submit_btn_text']) ? $opts['submit_btn_text'] : __('Reservar', 'hotel-booking-system')); ?>"
+                        class="regular-text">
+                    <p class="description">
+                        <?php esc_html_e('Texto del botón de envío (ej: Reservar, Cotizar).', 'hotel-booking-system'); ?>
+                    </p>
+                </td>
+            </tr>
 
             <!-- APARIENCIA: Formulario Flotante -->
             <tr>
@@ -152,15 +162,17 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
             </tr>
 
             <tr>
-                <th colspan="2"><h3><?php echo esc_html__('Configuración de Correos', 'hotel-booking-system'); ?></h3></th>
+                <th colspan="2">
+                    <h3><?php echo esc_html__('Configuración de Correos', 'hotel-booking-system'); ?></h3>
+                </th>
             </tr>
             <tr>
                 <td colspan="2">
                     <p class="description">
-                        <?php esc_html_e('Variables disponibles:', 'hotel-booking-system'); ?> 
-                        <code>{booking_id}</code>, <code>{guest_name}</code>, <code>{guest_email}</code>, 
-                        <code>{guest_phone}</code>, <code>{check_in_date}</code>, <code>{check_out_date}</code>, 
-                        <code>{room_type}</code>, <code>{adults_count}</code>, <code>{kids_count}</code>, 
+                        <?php esc_html_e('Variables disponibles:', 'hotel-booking-system'); ?>
+                        <code>{booking_id}</code>, <code>{guest_name}</code>, <code>{guest_email}</code>,
+                        <code>{guest_phone}</code>, <code>{check_in_date}</code>, <code>{check_out_date}</code>,
+                        <code>{room_type}</code>, <code>{adults_count}</code>, <code>{kids_count}</code>,
                         <code>{total_price}</code>
                     </p>
                 </td>
@@ -170,17 +182,21 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
             <tr>
                 <th scope="row"><?php esc_html_e('Email Staff: Asunto', 'hotel-booking-system'); ?></th>
                 <td>
-                    <input name="email_staff_subject" type="text" value="<?php echo esc_attr(!empty($opts['email_staff_subject']) ? $opts['email_staff_subject'] : '[Nueva Reservación] Solicitud #{booking_id}'); ?>" class="regular-text">
+                    <input name="email_staff_subject" type="text"
+                        value="<?php echo esc_attr(!empty($opts['email_staff_subject']) ? $opts['email_staff_subject'] : '[Nueva Reservación] Solicitud #{booking_id}'); ?>"
+                        class="regular-text">
                 </td>
             </tr>
             <tr>
                 <th scope="row"><?php esc_html_e('Email Staff: Contenido', 'hotel-booking-system'); ?></th>
                 <td>
-                    <?php 
+                    <?php
                     $content_staff = !empty($opts['email_staff_content']) ? $opts['email_staff_content'] : '';
-                    wp_editor($content_staff, 'email_staff_content', ['textarea_rows' => 10, 'media_buttons' => false]); 
+                    wp_editor($content_staff, 'email_staff_content', ['textarea_rows' => 10, 'media_buttons' => false]);
                     ?>
-                    <p class="description"><?php esc_html_e('Deje vacío para usar la plantilla predeterminada.', 'hotel-booking-system'); ?></p>
+                    <p class="description">
+                        <?php esc_html_e('Deje vacío para usar la plantilla predeterminada.', 'hotel-booking-system'); ?>
+                    </p>
                 </td>
             </tr>
 
@@ -188,17 +204,21 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
             <tr>
                 <th scope="row"><?php esc_html_e('Email Huésped: Asunto', 'hotel-booking-system'); ?></th>
                 <td>
-                    <input name="email_guest_subject" type="text" value="<?php echo esc_attr(!empty($opts['email_guest_subject']) ? $opts['email_guest_subject'] : 'Confirmación de Solicitud #{booking_id}'); ?>" class="regular-text">
+                    <input name="email_guest_subject" type="text"
+                        value="<?php echo esc_attr(!empty($opts['email_guest_subject']) ? $opts['email_guest_subject'] : 'Confirmación de Solicitud #{booking_id}'); ?>"
+                        class="regular-text">
                 </td>
             </tr>
             <tr>
                 <th scope="row"><?php esc_html_e('Email Huésped: Contenido', 'hotel-booking-system'); ?></th>
                 <td>
-                    <?php 
+                    <?php
                     $content_guest = !empty($opts['email_guest_content']) ? $opts['email_guest_content'] : '';
-                    wp_editor($content_guest, 'email_guest_content', ['textarea_rows' => 10, 'media_buttons' => false]); 
+                    wp_editor($content_guest, 'email_guest_content', ['textarea_rows' => 10, 'media_buttons' => false]);
                     ?>
-                    <p class="description"><?php esc_html_e('Deje vacío para usar la plantilla predeterminada.', 'hotel-booking-system'); ?></p>
+                    <p class="description">
+                        <?php esc_html_e('Deje vacío para usar la plantilla predeterminada.', 'hotel-booking-system'); ?>
+                    </p>
                 </td>
             </tr>
 

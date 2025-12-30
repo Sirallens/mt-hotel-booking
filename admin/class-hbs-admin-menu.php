@@ -142,6 +142,8 @@ class HBS_Admin_Menu
             $settings['booking_page_url'] = esc_url_raw($input['booking_page_url']);
         }
 
+        $settings['submit_btn_text'] = isset($input['submit_btn_text']) ? sanitize_text_field($input['submit_btn_text']) : '';
+
         update_option(HBS_Config::OPTION_KEY, $settings);
 
         wp_redirect(admin_url('admin.php?page=hbs_settings&hbs_saved=true'));

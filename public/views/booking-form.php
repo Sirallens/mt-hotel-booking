@@ -61,22 +61,15 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
     <div class="hbs-grid hbs-grid-2">
         <div class="hbs-field">
             <label for="hbs-checkin"><?php echo esc_html__('Fecha de llegada', 'hotel-booking-system'); ?></label>
-            <div class="hbs-input-icon">
+            <div class="hbs-input-wrapper">
                 <input id="hbs-checkin" type="date" class="js-flatpickr" name="check_in_date"
                     value="<?php echo esc_attr($check_in_date); ?>" min="<?php echo esc_attr($today); ?>" required>
-                <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
             </div>
         </div>
 
         <div class="hbs-field">
             <label for="hbs-nights"><?php echo esc_html__('Noches', 'hotel-booking-system'); ?></label>
-            <div class="hbs-input-icon">
+            <div class="hbs-input-wrapper">
                 <input id="hbs-nights" type="number" name="nights" min="1" value="<?php echo esc_attr($nights); ?>"
                     required>
                 <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -90,7 +83,7 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
     <div class="hbs-grid hbs-grid-2">
         <div class="hbs-field">
             <label for="hbs-adults"><?php echo esc_html__('Adultos', 'hotel-booking-system'); ?></label>
-            <div class="hbs-input-icon">
+            <div class="hbs-input-wrapper">
                 <input id="hbs-adults" type="number" name="adults_count" min="1"
                     value="<?php echo esc_attr($adults_prefill); ?>" required>
                 <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -106,7 +99,7 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
                 <?php echo esc_html__('Niños', 'hotel-booking-system'); ?>
                 <span class="hbs-sub-label">(≥4 años)</span>
             </label>
-            <div class="hbs-input-icon">
+            <div class="hbs-input-wrapper">
                 <input id="hbs-kids" type="number" name="kids_count" min="0"
                     value="<?php echo esc_attr($kids_prefill); ?>" required>
                 <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -201,7 +194,7 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
         <input type="hidden" name="total_price" value="0">
 
         <button type="submit" class="hbs-btn-primary">
-            <?php echo esc_html__('Confirmar Reserva', 'hotel-booking-system'); ?>
+            <?php echo esc_html(!empty($opts['submit_btn_text']) ? $opts['submit_btn_text'] : __('Confirmar Reserva', 'hotel-booking-system')); ?>
         </button>
     </div>
 

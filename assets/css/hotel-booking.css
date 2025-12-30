@@ -130,19 +130,45 @@
 
 .hbs-form button[type="submit"] {
   display: inline-block;
-  background: #0073aa;
+  background: var(--hbs-accent);
   color: #fff;
   border: none;
   padding: 12px 20px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #f8fafc;
+}
+
+.hbs-form button[type="submit"]:hover {
+  background: var(--hbs-primary-hover);
+}
+
+/* Room Type Selector (Horizontal Pills) */
+.hbs-room-selector {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.hbs-room-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  /* Pill shape */
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: center;
 }
 
 .hbs-room-card:hover {
-  border-color: #cbd5e1;
-  background: #fff;
+  border-color: var(--hbs-accent);
+  background: #f8fafc;
 }
 
 /* Hide actual radio */
@@ -154,63 +180,39 @@
 }
 
 /* Checked State */
-.hbs-room-radio:checked+.hbs-room-content+.hbs-check-mark {
-  background: var(--hbs-accent);
+.hbs-room-card:has(.hbs-room-radio:checked) {
   border-color: var(--hbs-accent);
-}
-
-.hbs-room-radio:checked+.hbs-room-content+.hbs-check-mark::after {
-  display: block;
+  background: #eff6ff;
+  /* Light Blue */
+  box-shadow: 0 0 0 1px var(--hbs-accent);
 }
 
 .hbs-room-radio:checked~.hbs-room-content .hbs-room-title {
   color: var(--hbs-accent);
 }
 
-.hbs-room-card:has(.hbs-room-radio:checked) {
-  border-color: var(--hbs-accent);
-  background: #eff6ff;
-}
-
 .hbs-room-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .hbs-room-title {
   font-weight: 700;
   font-size: 1rem;
   color: #1e293b;
+  line-height: 1.2;
 }
 
 .hbs-room-desc {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #64748b;
+  margin-top: 2px;
 }
 
-/* Custom Checkmark Circle */
+/* Hide the old checkmark circle for pill design */
 .hbs-check-mark {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #cbd5e1;
-  border-radius: 50%;
-  position: relative;
-  margin-left: 10px;
-  background: #fff;
-}
-
-.hbs-check-mark::after {
-  content: "";
-  position: absolute;
   display: none;
-  top: 50%;
-  left: 50%;
-  width: 10px;
-  height: 10px;
-  background: #fff;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
 }
 
 .hbs-hint {
@@ -258,7 +260,7 @@
   width: 100%;
   padding: 14px 20px;
   background: var(--hbs-primary);
-  color: #ffffff;
+  color: #000000;
   font-size: 1.1rem;
   font-weight: 700;
   border: none;
@@ -358,42 +360,164 @@
   #hbs-floating-form {
     display: block;
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 10px;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    max-width: auto;
+    padding: 15px 25px;
     background: #fff;
-    border-top: 2px solid #0073aa;
-    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e2e8f0;
+    border-radius: 50px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     z-index: 9999;
-    display: block;
   }
 
+  /* Center the form content */
   #hbs-floating-form form {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 8px;
+    gap: 15px;
   }
 
-  #hbs-floating-form input,
-  #hbs-floating-form button {
-    padding: 8px 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+  /* Label Styling in Floating Form */
+  #hbs-floating-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--hbs-text);
   }
 
+  #hbs-floating-form label span {
+    margin-left: 2px;
+  }
+
+  /* Specific Widths for inputs in floating form */
+  #hbs-floating-form input[name="check_in_date"] {
+    width: auto;
+  }
+
+  #hbs-floating-form input[name="nights"],
+  #hbs-floating-form input[name="adults"],
+  #hbs-floating-form input[name="kids"] {
+    width: 50px;
+    text-align: center;
+  }
+
+  /* Button Styling in Floating Form */
   #hbs-floating-form button {
-    background: #0073aa;
-    color: #fff;
+    background: var(--hbs-accent);
+    color: #000000;
     border: none;
     cursor: pointer;
-    transition: background 0.2s ease;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    height: 42px;
+    /* Match input wrapper height approx */
+    margin-top: 18px;
+    /* Align with inputs */
+    transition: background 0.2s ease, transform 0.1s ease;
   }
 
   #hbs-floating-form button:hover {
-    background: #005f8d;
+    background: var(--hbs-primary);
+    transform: translateY(-1px);
   }
+}
+
+/* GLOBAL SHARED STYLES FOR INPUT WRAPPERS (Main + Floating) */
+
+/* Input Wrapper (The "Box") */
+.hbs-input-wrapper,
+.hbs-phone-wrapper {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  /* Slate 100 */
+  border: 1px solid #cbd5e1;
+  /* Slate 300 */
+  border-radius: 6px;
+  padding: 0 8px;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hbs-input-wrapper:focus-within,
+.hbs-phone-wrapper:focus-within {
+  border-color: var(--hbs-accent);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Icon Style */
+.hbs-icon {
+  color: #64748b;
+  /* Slate 500 */
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+/* Reset inputs inside wrappers to look like they are part of the box */
+.hbs-input-wrapper input,
+.hbs-phone-wrapper input,
+.hbs-phone-wrapper select {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 8px 0 !important;
+  margin: 0 !important;
+  font-size: 0.95rem;
+  color: var(--hbs-text);
+  outline: none;
+  flex: 1;
+  /* Allow input to fill space */
+  width: auto;
+  /* Override 100% */
+  min-width: 0;
+  /* Fix flex overflow */
+}
+
+/* Specific adjustments for phone wrapper */
+.hbs-phone-wrapper select.hbs-country-select {
+  width: auto;
+  padding-right: 20px !important;
+  border-right: 1px solid #cbd5e1 !important;
+  border-radius: 0 !important;
+  margin-right: 8px !important;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+/* Hide native date icon (prevent duplicate) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+/* Hide number input arrows/spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  /* Firefox */
+}
+
+input[type="date"] {
+  position: relative;
+  font-family: inherit;
 }
