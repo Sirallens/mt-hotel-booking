@@ -413,7 +413,7 @@
   /* Button Styling in Floating Form */
   #hbs-floating-form button {
     background: var(--hbs-accent);
-    color: #000000;
+    color: #fff;
     border: none;
     cursor: pointer;
     padding: 10px 24px;
