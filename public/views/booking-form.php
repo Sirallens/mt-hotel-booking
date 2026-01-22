@@ -115,25 +115,30 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
 
     <!-- Room Type Cards -->
     <div class="hbs-room-selector">
-        <label class="hbs-room-card">
-            <input type="radio" name="room_type" value="single" class="hbs-room-radio">
-            <div class="hbs-room-content">
-                <span class="hbs-room-title"><?php echo esc_html__('Sencilla', 'hotel-booking-system'); ?></span>
-                <span
-                    class="hbs-room-desc"><?php echo esc_html__('Ideal para 1-2 personas.', 'hotel-booking-system'); ?></span>
-            </div>
-            <div class="hbs-check-mark"></div>
-        </label>
-
-        <label class="hbs-room-card">
-            <input type="radio" name="room_type" value="double" class="hbs-room-radio">
-            <div class="hbs-room-content">
-                <span class="hbs-room-title"><?php echo esc_html__('Doble', 'hotel-booking-system'); ?></span>
-                <span
-                    class="hbs-room-desc"><?php echo esc_html__('Espacio extra para familias.', 'hotel-booking-system'); ?></span>
-            </div>
-            <div class="hbs-check-mark"></div>
-        </label>
+        <?php
+        $room_types = HBS_Room_Types::get_all();
+        foreach ($room_types as $room):
+            ?>
+            <label class="hbs-room-card">
+                <input type="radio" name="room_type" value="<?php echo esc_attr($room['slug']); ?>" class="hbs-room-radio">
+                <div class="hbs-room-content">
+                    <span class="hbs-room-title"><?php echo esc_html($room['name']); ?></span>
+                    <span class="hbs-room-desc">
+                        <?php printf(
+                            esc_html__('Base: %d huéspedes | Max: %d personas', 'hotel-booking-system'),
+                            $room['base_guests'],
+                            $room['max_capacity']
+                        ); ?>
+                    </span>
+                    <?php if (!empty($room['detail_page_url'])): ?>
+                        <a href="<?php echo esc_url($room['detail_page_url']); ?>" target="_blank" class="hbs-room-link">
+                            <?php esc_html_e('Ver detalles', 'hotel-booking-system'); ?>
+                        </a>
+                    <?php endif; ?>
+                </div>
+                <div class="hbs-check-mark"></div>
+            </label>
+        <?php endforeach; ?>
     </div>
     <div id="hbs-room-hint" class="hbs-hint"></div>
 

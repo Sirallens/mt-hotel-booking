@@ -113,6 +113,15 @@ class HBS_Public
             wp_add_inline_style('hbs-public', $custom_css);
         }
 
+        // --- Custom CSS from Settings ---
+        $custom_css_booking = !empty($options['custom_css_booking_form']) ? $options['custom_css_booking_form'] : '';
+        $custom_css_floating = !empty($options['custom_css_floating_form']) ? $options['custom_css_floating_form'] : '';
+
+        if (!empty($custom_css_booking) || !empty($custom_css_floating)) {
+            $combined_css = $custom_css_booking . "\n" . $custom_css_floating;
+            wp_add_inline_style('hbs-public', $combined_css);
+        }
+
         // Extract prices (cast to float for safety).
         $prices = array(
             'price_single' => isset($options['price_single']) ? (float) $options['price_single'] : 1850.00,
@@ -121,6 +130,9 @@ class HBS_Public
             'price_extra_kid' => isset($options['price_extra_kid']) ? (float) $options['price_extra_kid'] : 250.00,
         );
 
+        // Get room types for JavaScript
+        $room_types = HBS_Room_Types::get_all();
+
         wp_localize_script(
             'hbs-public',
             'HBS_VARS',
@@ -128,16 +140,19 @@ class HBS_Public
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce(HBS_Config::NONCE_ACTION),
                 'prices' => $prices,
+                'thankyou_url' => !empty($options['thankyou_page_url']) ? esc_url($options['thankyou_page_url']) : '',
+                'room_types' => $room_types,
             )
         );
     }
 
     /**
-     * Register the booking form shortcode.
+     * Register the booking form shortcodes.
      */
     public function register_shortcode()
     {
         add_shortcode('hotel_booking_form', array($this, 'shortcode_booking_form'));
+        add_shortcode('hotel_booking_confirmation', array($this, 'shortcode_booking_confirmation'));
     }
 
     /**
@@ -156,6 +171,169 @@ class HBS_Public
             echo '<p>' . esc_html__('Plantilla de formulario no encontrada.', 'hotel-booking-system') . '</p>';
         }
 
+        return ob_get_clean();
+    }
+
+    /**
+     * Shortcode callback: displays booking confirmation.
+     *
+     * @return string
+     */
+    public function shortcode_booking_confirmation()
+    {
+        // Get booking ID from URL
+        $booking_id = isset($_GET['booking_id']) ? intval($_GET['booking_id']) : 0;
+
+        if (empty($booking_id)) {
+            return '<div class="hbs-confirmation hbs-error"><p>' . esc_html__('No se encontró el ID de reservación.', 'hotel-booking-system') . '</p></div>';
+        }
+
+        // Fetch booking details
+        $booking = HBS_Booking::get($booking_id);
+
+        if (!$booking) {
+            return '<div class="hbs-confirmation hbs-error"><p>' . esc_html__('Reservación no encontrada.', 'hotel-booking-system') . '</p></div>';
+        }
+
+        // Format room type - get from database
+        $room = HBS_Room_Types::get($booking['room_type']);
+        $room_type_label = $room ? $room['name'] : $booking['room_type'];
+
+        // Build output
+        ob_start();
+        ?>
+        <div class="hbs-confirmation hbs-success">
+            <div class="hbs-confirmation-header">
+                <h2><?php esc_html_e('¡Reservación Recibida!', 'hotel-booking-system'); ?></h2>
+                <p class="hbs-confirmation-subtitle">
+                    <?php printf(esc_html__('Gracias %s, hemos recibido su solicitud de reservación.', 'hotel-booking-system'), '<strong>' . esc_html($booking['guest_name']) . '</strong>'); ?>
+                </p>
+            </div>
+
+            <div class="hbs-confirmation-details">
+                <table class="hbs-confirmation-table">
+                    <tr>
+                        <th><?php esc_html_e('ID de Reservación', 'hotel-booking-system'); ?></th>
+                        <td><strong>#<?php echo esc_html($booking_id); ?></strong></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Check-in', 'hotel-booking-system'); ?></th>
+                        <td><?php echo esc_html($booking['check_in_date']); ?></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Check-out', 'hotel-booking-system'); ?></th>
+                        <td><?php echo esc_html($booking['check_out_date']); ?></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Tipo de Habitación', 'hotel-booking-system'); ?></th>
+                        <td><?php echo esc_html($room_type_label); ?></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Huéspedes', 'hotel-booking-system'); ?></th>
+                        <td><?php printf(esc_html__('%d Adultos, %d Niños', 'hotel-booking-system'), $booking['adults_count'], $booking['kids_count']); ?>
+                        </td>
+                    </tr>
+                    <tr class="hbs-total-row">
+                        <th><?php esc_html_e('Total Est', 'hotel-booking-system'); ?></th>
+                        <td><strong>$<?php echo esc_html(number_format($booking['total_price'], 2)); ?> MXN</strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="hbs-confirmation-footer">
+                <p><?php esc_html_e('Nos pondremos en contacto con usted pronto para confirmar la disponibilidad y los siguientes pasos.', 'hotel-booking-system'); ?>
+                </p>
+                <p><?php printf(esc_html__('Si tiene preguntas, contáctenos a %s', 'hotel-booking-system'), '<a href="mailto:' . esc_attr($booking['guest_email']) . '">' . esc_html($booking['guest_email']) . '</a>'); ?>
+                </p>
+            </div>
+        </div>
+
+        <style>
+            .hbs-confirmation {
+                max-width: 600px;
+                margin: 40px auto;
+                padding: 40px;
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                border: 1px solid #e2e8f0;
+            }
+
+            .hbs-confirmation.hbs-error {
+                border-color: #fecaca;
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            .hbs-confirmation-header {
+                text-align: center;
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+                border-bottom: 2px solid #3b82f6;
+            }
+
+            .hbs-confirmation-header h2 {
+                color: #0f172a;
+                font-size: 2rem;
+                margin: 0 0 10px;
+            }
+
+            .hbs-confirmation-subtitle {
+                color: #64748b;
+                font-size: 1.1rem;
+                margin: 0;
+            }
+
+            .hbs-confirmation-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }
+
+            .hbs-confirmation-table th,
+            .hbs-confirmation-table td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .hbs-confirmation-table th {
+                color: #64748b;
+                font-weight: 600;
+                width: 40%;
+            }
+
+            .hbs-confirmation-table td {
+                color: #0f172a;
+                font-weight: 500;
+            }
+
+            .hbs-confirmation-table tr.hbs-total-row th,
+            .hbs-confirmation-table tr.hbs-total-row td {
+                font-size: 1.2rem;
+                padding-top: 20px;
+                border-bottom: none;
+                color: #0f172a;
+            }
+
+            .hbs-confirmation-footer {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #e2e8f0;
+                text-align: center;
+                color: #64748b;
+            }
+
+            .hbs-confirmation-footer p {
+                margin: 10px 0;
+            }
+
+            .hbs-confirmation-footer a {
+                color: #3b82f6;
+                text-decoration: none;
+            }
+        </style>
+        <?php
         return ob_get_clean();
     }
 

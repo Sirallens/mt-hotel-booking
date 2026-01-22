@@ -63,13 +63,22 @@ class HBS_Emails
             '{guest_phone}' => $data['guest_phone'],
             '{check_in_date}' => $data['check_in_date'],
             '{check_out_date}' => $data['check_out_date'],
-            '{room_type}' => $data['room_type'] === 'single' ? 'Sencilla' : 'Doble',
+            '{room_type}' => self::get_room_type_name($data['room_type']),
             '{adults_count}' => $data['adults_count'],
             '{kids_count}' => $data['kids_count'],
             '{total_price}' => number_format($data['total_price'], 2)
         ];
 
         return str_replace(array_keys($replacements), array_values($replacements), $content);
+    }
+
+    /**
+     * Get room type display name
+     */
+    private static function get_room_type_name($slug)
+    {
+        $room = HBS_Room_Types::get($slug);
+        return $room ? $room['name'] : $slug;
     }
 
     /**

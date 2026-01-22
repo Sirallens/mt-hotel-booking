@@ -18,6 +18,7 @@ require_once plugin_dir_path(__FILE__) . 'includes/class-hbs-loader.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-hbs-activator.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-hbs-deactivator.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-hbs-booking.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-hbs-room-types.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-hbs-emails.php';
 require_once plugin_dir_path(__FILE__) . 'admin/class-hbs-admin-menu.php';
 require_once plugin_dir_path(__FILE__) . 'public/class-hbs-public.php';

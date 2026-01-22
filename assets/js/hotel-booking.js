@@ -392,6 +392,17 @@
             })
                 .done(function (resp) {
                     if (resp && resp.success) {
+                        const bookingId = resp.data && resp.data.booking_id ? resp.data.booking_id : 0;
+                        const thankyouUrl = (window.HBS_VARS && window.HBS_VARS.thankyou_url) ? window.HBS_VARS.thankyou_url : '';
+
+                        // If thank you URL is set, redirect
+                        if (thankyouUrl && bookingId) {
+                            const separator = thankyouUrl.indexOf('?') > -1 ? '&' : '?';
+                            window.location.href = thankyouUrl + separator + 'booking_id=' + bookingId;
+                            return;
+                        }
+
+                        // Fallback to inline message
                         const msg = resp.data && resp.data.msg ? resp.data.msg : 'Solicitud enviada correctamente.';
                         showMessage(msg, true);
                         // Preserve date; reset others
@@ -405,7 +416,7 @@
                     }
                 })
                 .fail(function () {
-                    showMessage('Ocurrió un error, inténtalo de nuevo.', false);
+                    showMessage('Ocurrió un error, inténtal de nuevo.', false);
                 })
                 .always(function () {
                     $submit.prop('disabled', false);

@@ -85,14 +85,19 @@ class HBS_Booking
         $guest_phone = sanitize_text_field($data['guest_phone']);
         $check_in_date = sanitize_text_field($data['check_in_date']); // Validate format below
         $nights = max(1, intval($data['nights']));
-        $room_type = in_array($data['room_type'], ['single', 'double']) ? $data['room_type'] : 'single';
+
+        // Validate room type exists
+        $room_types = HBS_Room_Types::get_all();
+        $room_type = isset($room_types[$data['room_type']]) ? $data['room_type'] : 'single';
+        $room = HBS_Room_Types::get($room_type);
+
         $adults = max(1, intval($data['adults_count']));
         $kids = max(0, intval($data['kids_count']));
         $total_guests = $adults + $kids;
 
-        // Rules
-        if ($total_guests > 4) {
-            return new WP_Error('hbs_limit', __('La capacidad máxima es de 4 personas.', 'hotel-booking-system'));
+        // Check capacity based on room type
+        if ($room && $total_guests > $room['max_capacity']) {
+            return new WP_Error('hbs_limit', sprintf(__('La capacidad máxima para este tipo de habitación es de %d personas.', 'hotel-booking-system'), $room['max_capacity']));
         }
 
         // Date format validation (Y-m-d)

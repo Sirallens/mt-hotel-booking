@@ -26,6 +26,10 @@ class HBS_Admin_Menu
 
         // Delete booking action
         $this->loader->add_action('admin_post_hbs_delete_booking', $this, 'delete_booking');
+
+        // Room type actions
+        $this->loader->add_action('admin_post_hbs_save_room_type', $this, 'save_room_type');
+        $this->loader->add_action('admin_post_hbs_delete_room_type', $this, 'delete_room_type');
     }
 
     public function enqueue_admin_assets($hook)
@@ -36,6 +40,9 @@ class HBS_Admin_Menu
         }
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
+
+        // Custom Admin CSS
+        wp_enqueue_style('hbs-admin-settings', plugins_url('../assets/css/admin-settings.css', __FILE__), [], '1.0.0');
 
         // Select2 for multiselect
         wp_enqueue_style('select2-css', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css');
@@ -71,6 +78,15 @@ class HBS_Admin_Menu
             'hbs_recent_bookings',
             [$this, 'render_recent_bookings_page']
         );
+
+        add_submenu_page(
+            'hbs_settings',
+            __('Tipos de Habitación', 'hotel-booking-system'),
+            __('Tipos de Habitación', 'hotel-booking-system'),
+            'manage_options',
+            'hbs_room_types',
+            [$this, 'render_room_types_page']
+        );
     }
 
     public function render_settings_page()
@@ -87,6 +103,14 @@ class HBS_Admin_Menu
             return;
         }
         include plugin_dir_path(__FILE__) . 'views/recent-bookings-page.php';
+    }
+
+    public function render_room_types_page()
+    {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        include plugin_dir_path(__FILE__) . 'views/room-types-page.php';
     }
 
     public function save_settings()
@@ -144,6 +168,17 @@ class HBS_Admin_Menu
 
         $settings['submit_btn_text'] = isset($input['submit_btn_text']) ? sanitize_text_field($input['submit_btn_text']) : '';
 
+        // Custom CSS
+        $settings['custom_css_booking_form'] = isset($input['custom_css_booking_form']) ? wp_strip_all_tags($input['custom_css_booking_form']) : '';
+        $settings['custom_css_floating_form'] = isset($input['custom_css_floating_form']) ? wp_strip_all_tags($input['custom_css_floating_form']) : '';
+
+        // Thank You Page - convert page ID to URL
+        if (isset($input['thankyou_page_id']) && intval($input['thankyou_page_id']) > 0) {
+            $settings['thankyou_page_url'] = get_permalink(intval($input['thankyou_page_id']));
+        } else {
+            $settings['thankyou_page_url'] = '';
+        }
+
         update_option(HBS_Config::OPTION_KEY, $settings);
 
         wp_redirect(admin_url('admin.php?page=hbs_settings&hbs_saved=true'));
@@ -164,6 +199,50 @@ class HBS_Admin_Menu
         }
 
         wp_redirect(admin_url('admin.php?page=hbs_recent_bookings&deleted=true'));
+        exit;
+    }
+
+    public function save_room_type()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Permisos insuficientes.', 'hotel-booking-system'));
+        }
+
+        check_admin_referer('hbs_save_room_type', 'hbs_nonce');
+
+        $room_type = [
+            'slug' => sanitize_key($_POST['slug']),
+            'name' => sanitize_text_field($_POST['name']),
+            'base_guests' => isset($_POST['base_guests']) ? max(1, intval($_POST['base_guests'])) : 2,
+            'max_capacity' => isset($_POST['max_capacity']) ? max(1, intval($_POST['max_capacity'])) : 4,
+            'base_price' => isset($_POST['base_price']) ? max(0, floatval($_POST['base_price'])) : 0,
+            'detail_page_url' => isset($_POST['detail_page_id']) && intval($_POST['detail_page_id']) > 0
+                ? get_permalink(intval($_POST['detail_page_id']))
+                : '',
+        ];
+
+        HBS_Room_Types::save($room_type);
+
+        wp_redirect(admin_url('admin.php?page=hbs_room_types&saved=true'));
+        exit;
+    }
+
+    public function delete_room_type()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Permisos insuficientes.', 'hotel-booking-system'));
+        }
+
+        check_admin_referer('hbs_delete_room_type');
+
+        $slug = isset($_GET['slug']) ? sanitize_key($_GET['slug']) : '';
+
+        if ($slug && !HBS_Room_Types::delete($slug)) {
+            wp_redirect(admin_url('admin.php?page=hbs_room_types&error=cannot_delete_last'));
+            exit;
+        }
+
+        wp_redirect(admin_url('admin.php?page=hbs_room_types&deleted=true'));
         exit;
     }
 }
