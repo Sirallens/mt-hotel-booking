@@ -43,7 +43,7 @@ body {
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
     border: 1px solid var(--hbs-border);
     margin-bottom: 30px;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .hbs-card-header {
@@ -134,10 +134,15 @@ body {
 .wp-picker-container {
     display: flex;
     align-items: center;
+
 }
 
 .wp-picker-input-wrap {
     margin-right: 10px;
+}
+
+.wp-picker-container .wp-picker-holder {
+    margin-top: 18rem;
 }
 
 /* Submit Button */
@@ -178,6 +183,7 @@ body {
     margin-bottom: 24px;
     font-weight: 500;
 }
+
 .hbs-notice-success {
     background-color: #ecfdf5;
     color: #047857;

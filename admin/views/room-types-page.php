@@ -211,7 +211,7 @@ if ($action === 'edit' && $edit_slug) {
                     </label>
                     <input type="url" name="detail_page_url" id="detail_page_url"
                         value="<?php echo $editing ? esc_url($room_data['detail_page_url']) : ''; ?>" class="hbs-input"
-                        placeholder="https://">
+                        placeholder="/url-detalle-habitacion">
                     <p class="hbs-description">
                         <?php esc_html_e('URL donde los usuarios pueden ver detalles, amenidades e imágenes de esta habitación.', 'hotel-booking-system'); ?>
                     </p>

@@ -127,7 +127,6 @@ class HBS_Admin_Menu
 
         // Sanitize fields
         $settings['staff_emails'] = sanitize_text_field($input['staff_emails']);
-        $settings['policies_url'] = esc_url_raw($input['policies_url']);
         $settings['price_single'] = floatval($input['price_single']);
         $settings['price_double'] = floatval($input['price_double']);
         $settings['price_extra_adult'] = floatval($input['price_extra_adult']);
@@ -162,8 +161,32 @@ class HBS_Admin_Menu
         $settings['float_color_btn'] = sanitize_hex_color($input['float_color_btn']);
 
         // Optional booking URL for floating form redirect
-        if (isset($input['booking_page_url'])) {
-            $settings['booking_page_url'] = esc_url_raw($input['booking_page_url']);
+        // Booking Page URL - support relative paths
+        if (isset($input['booking_page_url']) && !empty($input['booking_page_url'])) {
+            $url = trim($input['booking_page_url']);
+            // If starts with /, prepend site URL
+            if (strpos($url, '/') === 0) {
+                $settings['booking_page_url'] = esc_url_raw(home_url($url));
+            } else {
+                $settings['booking_page_url'] = esc_url_raw($url);
+            }
+        } else {
+            $settings['booking_page_url'] = '';
+        }
+
+        // Policies Page - convert page ID to URL OR handle direct URL input
+        if (isset($input['policies_page_id']) && intval($input['policies_page_id']) > 0) {
+            $settings['policies_url'] = get_permalink(intval($input['policies_page_id']));
+        } elseif (isset($input['policies_url']) && !empty($input['policies_url'])) {
+            // Support direct URL input with relative path
+            $url = trim($input['policies_url']);
+            if (strpos($url, '/') === 0) {
+                $settings['policies_url'] = esc_url_raw(home_url($url));
+            } else {
+                $settings['policies_url'] = esc_url_raw($url);
+            }
+        } else {
+            $settings['policies_url'] = '';
         }
 
         $settings['submit_btn_text'] = isset($input['submit_btn_text']) ? sanitize_text_field($input['submit_btn_text']) : '';
@@ -216,10 +239,20 @@ class HBS_Admin_Menu
             'base_guests' => isset($_POST['base_guests']) ? max(1, intval($_POST['base_guests'])) : 2,
             'max_capacity' => isset($_POST['max_capacity']) ? max(1, intval($_POST['max_capacity'])) : 4,
             'base_price' => isset($_POST['base_price']) ? max(0, floatval($_POST['base_price'])) : 0,
-            'detail_page_url' => isset($_POST['detail_page_id']) && intval($_POST['detail_page_id']) > 0
-                ? get_permalink(intval($_POST['detail_page_id']))
-                : '',
+            'detail_page_url' => '',
         ];
+
+        // Handle detail_page_url: support page ID dropdown OR direct URL with relative paths
+        if (isset($_POST['detail_page_id']) && intval($_POST['detail_page_id']) > 0) {
+            $room_type['detail_page_url'] = get_permalink(intval($_POST['detail_page_id']));
+        } elseif (isset($_POST['detail_page_url']) && !empty($_POST['detail_page_url'])) {
+            $url = trim($_POST['detail_page_url']);
+            if (strpos($url, '/') === 0) {
+                $room_type['detail_page_url'] = esc_url_raw(home_url($url));
+            } else {
+                $room_type['detail_page_url'] = esc_url_raw($url);
+            }
+        }
 
         HBS_Room_Types::save($room_type);
 

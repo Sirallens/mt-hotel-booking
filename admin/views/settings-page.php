@@ -49,9 +49,21 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                 </div>
                 <div class="hbs-field">
                     <label class="hbs-label"
-                        for="policies_url"><?php esc_html_e('URL Políticas', 'hotel-booking-system'); ?></label>
-                    <input name="policies_url" type="url" id="policies_url"
-                        value="<?php echo esc_attr($policies_url); ?>" class="hbs-input">
+                        for="policies_page_id"><?php esc_html_e('Página de Políticas', 'hotel-booking-system'); ?></label>
+                    <?php
+                    $policies_page_id = 0;
+                    if (!empty($policies_url)) {
+                        $policies_page_id = url_to_postid($policies_url);
+                    }
+                    wp_dropdown_pages(array(
+                        'name' => 'policies_page_id',
+                        'id' => 'policies_page_id',
+                        'class' => 'hbs-input',
+                        'show_option_none' => __('— Seleccionar página —', 'hotel-booking-system'),
+                        'option_none_value' => '0',
+                        'selected' => $policies_page_id
+                    ));
+                    ?>
                     <p class="hbs-description">
                         <?php esc_html_e('Enlace a términos y condiciones.', 'hotel-booking-system'); ?>
                     </p>
@@ -547,6 +559,12 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                     width: 'resolve'
                 });
             }
+
+            // Make color pickers floating to prevent layout shifts
+            $('<style>')
+                .text('.wp-picker-container { position: relative; } ' +
+                    '.wp-picker-container .wp-picker-holder { position: absolute !important; z-index: 100 !important; margin-top: 5px; }')
+                .appendTo('head');
         });
     </script>
 </div>
