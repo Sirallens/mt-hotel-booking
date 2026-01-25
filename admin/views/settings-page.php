@@ -7,14 +7,34 @@ $opts = get_option(HBS_Config::OPTION_KEY, []);
 
 // Defaults
 $staff_emails = isset($opts['staff_emails']) ? $opts['staff_emails'] : get_option('admin_email');
-$policies_url = isset($opts['policies_url']) ? $opts['policies_url'] : '';
 $p_single = isset($opts['price_single']) ? $opts['price_single'] : '1850.00';
 $p_double = isset($opts['price_double']) ? $opts['price_double'] : '2100.00';
 $p_ex_adult = isset($opts['price_extra_adult']) ? $opts['price_extra_adult'] : '450.00';
 $p_ex_kid = isset($opts['price_extra_kid']) ? $opts['price_extra_kid'] : '250.00';
 $floating = !empty($opts['floating_enabled']);
 $note = isset($opts['guest_email_note']) ? $opts['guest_email_note'] : '';
-$book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
+
+// Page IDs for dropdowns (retrieve from DB or fallback to converting URLs)
+// Policies Page
+$policies_page_id = isset($opts['policies_page_id']) ? (int) $opts['policies_page_id'] : 0;
+if ($policies_page_id === 0 && !empty($opts['policies_url'])) {
+    // Migration: convert existing URL to page ID
+    $policies_page_id = url_to_postid($opts['policies_url']);
+}
+
+// Booking Page
+$book_page_id = isset($opts['book_page_id']) ? (int) $opts['book_page_id'] : 0;
+if ($book_page_id === 0 && !empty($opts['booking_page_url'])) {
+    // Migration: convert existing URL to page ID
+    $book_page_id = url_to_postid($opts['booking_page_url']);
+}
+
+// Thank You Page
+$thankyou_page_id = isset($opts['thankyou_page_id']) ? (int) $opts['thankyou_page_id'] : 0;
+if ($thankyou_page_id === 0 && !empty($opts['thankyou_page_url'])) {
+    // Migration: convert existing URL to page ID
+    $thankyou_page_id = url_to_postid($opts['thankyou_page_url']);
+}
 ?>
 
 <div class="hbs-wrap">
@@ -51,21 +71,47 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                     <label class="hbs-label"
                         for="policies_page_id"><?php esc_html_e('Página de Políticas', 'hotel-booking-system'); ?></label>
                     <?php
-                    $policies_page_id = 0;
-                    if (!empty($policies_url)) {
-                        $policies_page_id = url_to_postid($policies_url);
-                    }
                     wp_dropdown_pages(array(
                         'name' => 'policies_page_id',
                         'id' => 'policies_page_id',
                         'class' => 'hbs-input',
-                        'show_option_none' => __('— Seleccionar página —', 'hotel-booking-system'),
+                        'show_option_none' => __('Seleccionar página', 'hotel-booking-system'),
                         'option_none_value' => '0',
                         'selected' => $policies_page_id
                     ));
                     ?>
                     <p class="hbs-description">
                         <?php esc_html_e('Enlace a términos y condiciones.', 'hotel-booking-system'); ?>
+                    </p>
+                </div>
+                <div class="hbs-field">
+                    <label class="hbs-label"
+                        for="hotel_logo"><?php esc_html_e('Logo del Hotel', 'hotel-booking-system'); ?></label>
+                    <?php
+                    $logo_id = isset($opts['hotel_logo_id']) ? (int) $opts['hotel_logo_id'] : 0;
+                    $logo_url = $logo_id ? wp_get_attachment_image_url($logo_id, 'medium') : '';
+                    ?>
+                    <div class="hbs-logo-upload">
+                        <input type="hidden" name="hotel_logo_id" id="hotel_logo_id"
+                            value="<?php echo esc_attr($logo_id); ?>">
+                        <div class="hbs-logo-preview" id="hbs-logo-preview"
+                            style="<?php echo $logo_url ? '' : 'display:none;'; ?>">
+                            <?php if ($logo_url): ?>
+                                <img src="<?php echo esc_url($logo_url); ?>" alt="Logo"
+                                    style="max-width: 200px; height: auto;">
+                            <?php endif; ?>
+                        </div>
+                        <button type="button" class="hbs-button hbs-button-secondary" id="hbs-upload-logo">
+                            <?php echo $logo_url ? esc_html__('Cambiar Logo', 'hotel-booking-system') : esc_html__('Subir Logo', 'hotel-booking-system'); ?>
+                        </button>
+                        <?php if ($logo_url): ?>
+                            <button type="button" class="hbs-button hbs-button-danger" id="hbs-remove-logo">
+                                <?php esc_html_e('Eliminar Logo', 'hotel-booking-system'); ?>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                    <p class="hbs-description">
+                        <?php esc_html_e('Logo que aparecerá en las plantillas de correo electrónico.', 'hotel-booking-system'); ?>
                     </p>
                 </div>
             </div>
@@ -103,6 +149,7 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                 </div>
             </div>
         </div>
+
 
         <!-- Apariencia -->
         <div class="hbs-card">
@@ -156,6 +203,7 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
 
         <!-- Formulario Flotante -->
         <div class="hbs-card">
+
             <div class="hbs-card-header">
                 <h2 class="hbs-card-title">
                     <?php esc_html_e('Formulario Flotante (Barra Inferior)', 'hotel-booking-system'); ?>
@@ -191,9 +239,17 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
 
                 <div class="hbs-field hbs-full-width">
                     <label class="hbs-label"
-                        for="booking_page_url"><?php esc_html_e('URL Página Reservación (Destino)', 'hotel-booking-system'); ?></label>
-                    <input name="booking_page_url" type="url" id="booking_page_url"
-                        value="<?php echo esc_attr($book_url); ?>" class="hbs-input">
+                        for="book_page_id"><?php esc_html_e('URL Página Reservación (Destino)', 'hotel-booking-system'); ?></label>
+                    <?php
+                    wp_dropdown_pages(array(
+                        'name' => 'book_page_id',
+                        'id' => 'book_page_id',
+                        'class' => 'hbs-input',
+                        'show_option_none' => __('Seleccionar página', 'hotel-booking-system'),
+                        'option_none_value' => '0',
+                        'selected' => $book_page_id
+                    ));
+                    ?>
                 </div>
 
                 <div class="hbs-field hbs-full-width">
@@ -221,19 +277,13 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                     <label class="hbs-label"
                         for="thankyou_page_id"><?php esc_html_e('Página de Gracias', 'hotel-booking-system'); ?></label>
                     <?php
-                    // Get current page ID from URL if saved
-                    $current_page_id = 0;
-                    if (!empty($opts['thankyou_page_url'])) {
-                        $current_page_id = url_to_postid($opts['thankyou_page_url']);
-                    }
-
                     wp_dropdown_pages(array(
                         'name' => 'thankyou_page_id',
                         'id' => 'thankyou_page_id',
                         'class' => 'hbs-input',
-                        'show_option_none' => __('— Seleccionar página —', 'hotel-booking-system'),
+                        'show_option_none' => __('Seleccionar página', 'hotel-booking-system'),
                         'option_none_value' => '0',
-                        'selected' => $current_page_id
+                        'selected' => $thankyou_page_id
                     ));
                     ?>
                     <p class="hbs-description">
@@ -264,6 +314,20 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                         value="<?php echo esc_attr(!empty($opts['email_staff_subject']) ? $opts['email_staff_subject'] : '[Nueva Reservación] Solicitud #{booking_id}'); ?>"
                         class="hbs-input">
                 </div>
+                
+                <div class="hbs-field">
+                    <label class="hbs-checkbox" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="checkbox" name="use_custom_staff_template" value="1" 
+                            <?php checked(!empty($opts['use_custom_staff_template']), true); ?>>
+                        <span style="font-weight: 600; color: var(--hbs-text);">
+                            <?php esc_html_e('Usar plantilla personalizada (Staff)', 'hotel-booking-system'); ?>
+                        </span>
+                    </label>
+                    <p class="hbs-description" style="margin: -10px 0 10px 0;">
+                        <?php esc_html_e('Si está desactivado, se usará la plantilla moderna predeterminada con el logo del hotel. Si está activado, podrás crear tu propia plantilla HTML personalizada abajo.', 'hotel-booking-system'); ?>
+                    </p>
+                </div>
+
                 <div class="hbs-field">
                     <label
                         class="hbs-label"><?php esc_html_e('Contenido Email Staff', 'hotel-booking-system'); ?></label>
@@ -271,6 +335,12 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                     $content_staff = !empty($opts['email_staff_content']) ? $opts['email_staff_content'] : '';
                     wp_editor($content_staff, 'email_staff_content', ['textarea_rows' => 10, 'media_buttons' => true]);
                     ?>
+                    <p class="hbs-description" style="margin-top: 10px;">
+                        <?php esc_html_e('Placeholders disponibles:', 'hotel-booking-system'); ?>
+                        <code>{booking_id}</code>, <code>{guest_name}</code>, <code>{guest_email}</code>, 
+                        <code>{guest_phone}</code>, <code>{check_in_date}</code>, <code>{check_out_date}</code>, 
+                        <code>{room_type}</code>, <code>{adults_count}</code>, <code>{kids_count}</code>, <code>{total_price}</code>
+                    </p>
                 </div>
 
                 <hr style="margin: 30px 0; border: 0; border-top: 1px solid var(--hbs-border);">
@@ -283,6 +353,20 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                         value="<?php echo esc_attr(!empty($opts['email_guest_subject']) ? $opts['email_guest_subject'] : 'Confirmación de Solicitud #{booking_id}'); ?>"
                         class="hbs-input">
                 </div>
+
+                <div class="hbs-field">
+                    <label class="hbs-checkbox" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="checkbox" name="use_custom_guest_template" value="1" 
+                            <?php checked(!empty($opts['use_custom_guest_template']), true); ?>>
+                        <span style="font-weight: 600; color: var(--hbs-text);">
+                            <?php esc_html_e('Usar plantilla personalizada (Huésped)', 'hotel-booking-system'); ?>
+                        </span>
+                    </label>
+                    <p class="hbs-description" style="margin: -10px 0 10px 0;">
+                        <?php esc_html_e('Si está desactivado, se usará la plantilla moderna predeterminada con el logo del hotel. Si está activado, podrás crear tu propia plantilla HTML personalizada abajo.', 'hotel-booking-system'); ?>
+                    </p>
+                </div>
+
                 <div class="hbs-field">
                     <label
                         class="hbs-label"><?php esc_html_e('Contenido Email Huésped', 'hotel-booking-system'); ?></label>
@@ -290,6 +374,12 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                     $content_guest = !empty($opts['email_guest_content']) ? $opts['email_guest_content'] : '';
                     wp_editor($content_guest, 'email_guest_content', ['textarea_rows' => 10, 'media_buttons' => true]);
                     ?>
+                    <p class="hbs-description" style="margin-top: 10px;">
+                        <?php esc_html_e('Placeholders disponibles:', 'hotel-booking-system'); ?>
+                        <code>{booking_id}</code>, <code>{guest_name}</code>, <code>{guest_email}</code>, 
+                        <code>{guest_phone}</code>, <code>{check_in_date}</code>, <code>{check_out_date}</code>, 
+                        <code>{room_type}</code>, <code>{adults_count}</code>, <code>{kids_count}</code>, <code>{total_price}</code>
+                    </p>
                 </div>
                 <div class="hbs-field">
                     <label class="hbs-label"
@@ -565,6 +655,75 @@ $book_url = isset($opts['booking_page_url']) ? $opts['booking_page_url'] : '';
                 .text('.wp-picker-container { position: relative; } ' +
                     '.wp-picker-container .wp-picker-holder { position: absolute !important; z-index: 100 !important; margin-top: 5px; }')
                 .appendTo('head');
+
+            // Logo Upload Handler
+            var logoFrame;
+            $('#hbs-upload-logo').on('click', function (e) {
+                e.preventDefault();
+
+                // If the media frame already exists, reopen it.
+                if (logoFrame) {
+                    logoFrame.open();
+                    return;
+                }
+
+                // Create a new media frame
+                logoFrame = wp.media({
+                    title: 'Seleccionar Logo del Hotel',
+                    button: {
+                        text: 'Usar este logo'
+                    },
+                    multiple: false,
+                    library: {
+                        type: 'image'
+                    }
+                });
+
+                // When an image is selected in the media frame...
+                logoFrame.on('select', function () {
+                    var attachment = logoFrame.state().get('selection').first().toJSON();
+
+                    // Update hidden field with attachment ID
+                    $('#hotel_logo_id').val(attachment.id);
+
+                    // Update preview
+                    $('#hbs-logo-preview').show().html(
+                        '<img src="' + attachment.url + '" alt="Logo" style="max-width: 200px; height: auto;">'
+                    );
+
+                    // Update button text
+                    $('#hbs-upload-logo').text('<?php echo esc_js(__("Cambiar Logo", "hotel-booking-system")); ?>');
+
+                    // Show remove button if it doesn't exist
+                    if (!$('#hbs-remove-logo').length) {
+                        $('#hbs-upload-logo').after(
+                            '<button type="button" class="hbs-button hbs-button-danger" id="hbs-remove-logo">' +
+                            '<?php echo esc_js(__("Eliminar Logo", "hotel-booking-system")); ?>' +
+                            '</button>'
+                        );
+                    }
+                });
+
+                // Finally, open the modal on click
+                logoFrame.open();
+            });
+
+            // Logo Remove Handler (using delegation for dynamically added button)
+            $(document).on('click', '#hbs-remove-logo', function (e) {
+                e.preventDefault();
+
+                // Clear the hidden field
+                $('#hotel_logo_id').val('');
+
+                // Hide and clear preview
+                $('#hbs-logo-preview').hide().html('');
+
+                // Update button text
+                $('#hbs-upload-logo').text('<?php echo esc_js(__("Subir Logo", "hotel-booking-system")); ?>');
+
+                // Remove the remove button
+                $(this).remove();
+            });
         });
     </script>
 </div>

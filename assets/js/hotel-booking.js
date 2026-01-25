@@ -225,13 +225,19 @@
     function initFlatpickrIfPresent() {
         if (window.flatpickr && $('.js-flatpickr').length) {
             try {
-                window.flatpickr('.js-flatpickr', {
-                    dateFormat: 'Y-m-d',
-                    minDate: 'today',
-                    locale: (window.flatpickr).l10ns && (window.flatpickr).l10ns.es ? 'es' : undefined
+                // Initialize each element individually to handle dynamically added elements
+                $('.js-flatpickr').each(function () {
+                    // Check if this element already has a flatpickr instance
+                    if (!this._flatpickr) {
+                        window.flatpickr(this, {
+                            dateFormat: 'Y-m-d',
+                            minDate: 'today',
+                            locale: (window.flatpickr).l10ns && (window.flatpickr).l10ns.es ? 'es' : undefined
+                        });
+                    }
                 });
             } catch (e) {
-                // Fail silently
+                console.error('Flatpickr initialization error:', e);
             }
         }
     }
@@ -453,10 +459,27 @@
         // Initial compute (in case no URL params)
         updateUI();
 
-        // Flatpickr optional
-        initFlatpickrIfPresent();
-
         // Attach submit logic
         attachSubmitHandler($form, updateUI);
+    });
+
+    // ===============================================================
+    // FLATPICKR INITIALIZATION - Runs on ALL pages (including floating form only)
+    // ===============================================================
+    $(function () {
+        // Flatpickr optional - initial call
+        initFlatpickrIfPresent();
+
+        // Re-initialize multiple times to catch dynamically added elements (like floating form)
+        // This handles cases where elements load after document.ready
+        var retryCount = 0;
+        var maxRetries = 5;
+        var retryInterval = setInterval(function () {
+            initFlatpickrIfPresent();
+            retryCount++;
+            if (retryCount >= maxRetries) {
+                clearInterval(retryInterval);
+            }
+        }, 200); // Check every 200ms for up to 1 second total
     });
 })(jQuery);

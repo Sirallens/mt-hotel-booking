@@ -206,14 +206,27 @@ if ($action === 'edit' && $edit_slug) {
                 </div>
 
                 <div class="hbs-field">
-                    <label class="hbs-label" for="detail_page_url">
-                        <?php esc_html_e('URL Página de Detalles (Opcional)', 'hotel-booking-system'); ?>
+                    <label class="hbs-label" for="detail_page_id">
+                        <?php esc_html_e('Página de Detalles (Opcional)', 'hotel-booking-system'); ?>
                     </label>
-                    <input type="url" name="detail_page_url" id="detail_page_url"
-                        value="<?php echo $editing ? esc_url($room_data['detail_page_url']) : ''; ?>" class="hbs-input"
-                        placeholder="/url-detalle-habitacion">
+                    <?php
+                    // Get page ID from existing URL if editing
+                    $detail_page_id = 0;
+                    if ($editing && !empty($room_data['detail_page_url'])) {
+                        $detail_page_id = url_to_postid($room_data['detail_page_url']);
+                    }
+
+                    wp_dropdown_pages(array(
+                        'name' => 'detail_page_id',
+                        'id' => 'detail_page_id',
+                        'class' => 'hbs-input',
+                        'show_option_none' => __('Seleccionar página', 'hotel-booking-system'),
+                        'option_none_value' => '0',
+                        'selected' => $detail_page_id
+                    ));
+                    ?>
                     <p class="hbs-description">
-                        <?php esc_html_e('URL donde los usuarios pueden ver detalles, amenidades e imágenes de esta habitación.', 'hotel-booking-system'); ?>
+                        <?php esc_html_e('Página donde los usuarios pueden ver detalles, amenidades e imágenes de esta habitación.', 'hotel-booking-system'); ?>
                     </p>
                 </div>
 

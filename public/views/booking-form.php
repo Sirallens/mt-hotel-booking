@@ -40,14 +40,31 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
     <input type="hidden" name="action" value="hbs_submit_booking">
     <!-- Nonce (seguridad) -->
     <input type="hidden" name="<?php echo esc_attr(HBS_Config::NONCE_KEY); ?>" value="<?php echo esc_attr($nonce); ?>">
-    <!-- Honeypot anti-spam -->
-    <input type="text" name="hbs_hp_field" value="" style="display:none;" tabindex="-1" autocomplete="off">
+
+    <!-- Honeypot anti-spam (múltiples trampas) -->
+    <div style="position: absolute; left: -9999px; top: -9999px;" aria-hidden="true">
+        <input type="text" name="hbs_hp_field" value="" tabindex="-1" autocomplete="off">
+        <input type="email" name="website_url" value="" tabindex="-1" autocomplete="off" placeholder="Tu sitio web">
+        <input type="text" name="company_name" value="" tabindex="-1" autocomplete="off"
+            placeholder="Nombre de empresa">
+    </div>
 
     <div class="hbs-header">
         <h3><?php echo esc_html__('Solicitud de reservación', 'hotel-booking-system'); ?></h3>
         <p class="hbs-subtitle">
             <?php echo esc_html__('Complete sus datos para recibir una cotización oficial.', 'hotel-booking-system'); ?>
         </p>
+        <div class="hbs-info-note">
+            <svg class="hbs-info-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <p>
+                <?php echo esc_html__('Este formulario es para solicitar cotización de reservación. Un miembro de nuestro equipo le atenderá a través de la información de contacto que proporcione. Se recomienda enviar su solicitud con al menos 2 días de anticipación.', 'hotel-booking-system'); ?>
+            </p>
+        </div>
     </div>
 
     <!-- Avisos -->
@@ -190,6 +207,13 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
                     '<a href="' . $policies_url . '" target="_blank" class="hbs-link">' . esc_html__('políticas', 'hotel-booking-system') . '</a>'
                 );
                 ?>
+            </span>
+        </label>
+
+        <label class="hbs-checkbox-wrapper">
+            <input type="checkbox" name="accept_quote_terms" required>
+            <span class="hbs-checkbox-text">
+                <?php echo esc_html__('Entiendo que esta es una solicitud de cotización y que debo reservar con al menos 2 días de anticipación.', 'hotel-booking-system'); ?>
             </span>
         </label>
 

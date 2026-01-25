@@ -48,6 +48,30 @@
   margin: 0;
 }
 
+.hbs-info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 16px;
+}
+
+.hbs-info-note .hbs-info-icon {
+  flex-shrink: 0;
+  color: #0284c7;
+  margin-top: 2px;
+}
+
+.hbs-info-note p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #0369a1;
+}
+
 .hbs-notices {
   display: flex;
   justify-content: center;
@@ -431,6 +455,12 @@
     background: var(--hbs-primary);
     transform: translateY(-1px);
   }
+
+  /* Make floating form inputs more compact */
+  #hbs-floating-form .hbs-input-wrapper input {
+    padding: 4px 0 !important;
+    font-size: 1.5rem;
+  }
 }
 
 /* GLOBAL SHARED STYLES FOR INPUT WRAPPERS (Main + Floating) */
@@ -454,7 +484,6 @@
 .hbs-input-wrapper:focus-within,
 .hbs-phone-wrapper:focus-within {
   border-color: var(--hbs-accent);
-  background: #fff;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 

@@ -57,18 +57,43 @@ class HBS_Public
         // Assets are in: mt-hotel-booking/assets/
         // This file is in: mt-hotel-booking/public/
 
+        // Enqueue Flatpickr library for datepicker
+        wp_enqueue_style(
+            'flatpickr',
+            'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css',
+            array(),
+            '4.6.13'
+        );
+
+        wp_enqueue_script(
+            'flatpickr',
+            'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js',
+            array(),
+            '4.6.13',
+            true
+        );
+
+        // Flatpickr Spanish locale (optional)
+        wp_enqueue_script(
+            'flatpickr-es',
+            'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js',
+            array('flatpickr'),
+            '4.6.13',
+            true
+        );
+
         wp_enqueue_style(
             'hbs-public',
             plugins_url('../assets/css/hotel-booking.css', __FILE__),
-            array(),
-            '0.1.1' // Bump version
+            array('flatpickr'), // Depend on Flatpickr CSS
+            '0.1.4' // Info note styling
         );
 
         wp_enqueue_script(
             'hbs-public',
             plugins_url('../assets/js/hotel-booking.js', __FILE__),
-            array('jquery'),
-            '0.1.1',
+            array('jquery', 'flatpickr', 'flatpickr-es'), // Depend on Flatpickr and Spanish locale
+            '0.1.5', // Flatpickr init now runs on ALL pages
             true
         );
 
@@ -243,7 +268,7 @@ class HBS_Public
             <div class="hbs-confirmation-footer">
                 <p><?php esc_html_e('Nos pondremos en contacto con usted pronto para confirmar la disponibilidad y los siguientes pasos.', 'hotel-booking-system'); ?>
                 </p>
-                <p><?php printf(esc_html__('Si tiene preguntas, contáctenos a %s', 'hotel-booking-system'), '<a href="mailto:' . esc_attr($booking['guest_email']) . '">' . esc_html($booking['guest_email']) . '</a>'); ?>
+                <p><?php printf(esc_html__('Si tiene preguntas, contáctenos a %s', 'hotel-booking-system'), '<a href="mailto:contacto@altavistahotel.com.mx">contacto@altavistahotel.com.mx</a>'); ?>
                 </p>
             </div>
         </div>
@@ -338,12 +363,60 @@ class HBS_Public
     }
 
     /**
+     * Check if a page builder is currently active/editing.
+     * 
+     * @return bool True if in page builder edit mode.
+     */
+    private function is_page_builder_active()
+    {
+        // Elementor
+        if (isset($_GET['elementor-preview']) || did_action('elementor/preview/init')) {
+            return true;
+        }
+
+        // Divi Builder
+        if (function_exists('et_core_is_fb_enabled') && et_core_is_fb_enabled()) {
+            return true;
+        }
+        if (isset($_GET['et_fb'])) {
+            return true;
+        }
+
+        // Beaver Builder
+        if (isset($_GET['fl_builder'])) {
+            return true;
+        }
+
+        // Bricks Builder
+        if (isset($_GET['bricks']) && $_GET['bricks'] === 'run') {
+            return true;
+        }
+
+        // Oxygen Builder
+        if (isset($_GET['ct_builder']) || defined('SHOW_CT_BUILDER')) {
+            return true;
+        }
+
+        // Brizy Builder
+        if (isset($_GET['brizy-edit']) || isset($_GET['brizy-edit-iframe'])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Render floating mini–form in footer (desktop only).
      * Outputs only if 'floating_enabled' setting is truthy AND not in admin.
      */
     public function render_floating_form()
     {
         if (is_admin()) {
+            return;
+        }
+
+        // Don't show in page builders
+        if ($this->is_page_builder_active()) {
             return;
         }
 
@@ -385,10 +458,18 @@ class HBS_Public
             <form method="get" action="<?php echo $booking_url; ?>">
                 <!-- Check-in -->
                 <label>
-                    <span><?php echo esc_html__('Llegada', 'hotel-booking-system'); ?></span>
+                    <span><?php echo esc_html__('Check-In', 'hotel-booking-system'); ?></span>
                     <div class="hbs-input-wrapper">
-                        <input type="date" name="check_in_date" value="<?php echo esc_attr($today); ?>"
-                            min="<?php echo esc_attr($today); ?>">
+                        <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <input type="text" name="check_in_date" class="js-flatpickr" value="<?php echo esc_attr($today); ?>"
+                            min="<?php echo esc_attr($today); ?>"
+                            placeholder="<?php echo esc_attr__('Seleccionar fecha', 'hotel-booking-system'); ?>" readonly>
                     </div>
                 </label>
 
@@ -451,8 +532,9 @@ class HBS_Public
         // Nonce.
         check_ajax_referer(HBS_Config::NONCE_ACTION, HBS_Config::NONCE_KEY);
 
-        // Honeypot (simple anti-spam).
-        if (!empty($_POST['hbs_hp_field'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        // Honeypot (múltiples campos anti-spam).
+        // Si cualquier campo honeypot tiene valor, es spam
+        if (!empty($_POST['hbs_hp_field']) || !empty($_POST['website_url']) || !empty($_POST['company_name'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
             wp_send_json_error(
                 array(
                     'msg' => esc_html__('Spam detectado.', 'hotel-booking-system'),

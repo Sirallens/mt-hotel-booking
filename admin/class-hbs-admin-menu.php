@@ -27,6 +27,9 @@ class HBS_Admin_Menu
         // Delete booking action
         $this->loader->add_action('admin_post_hbs_delete_booking', $this, 'delete_booking');
 
+        // Bulk delete bookings action
+        $this->loader->add_action('admin_post_hbs_bulk_delete_bookings', $this, 'bulk_delete_bookings');
+
         // Room type actions
         $this->loader->add_action('admin_post_hbs_save_room_type', $this, 'save_room_type');
         $this->loader->add_action('admin_post_hbs_delete_room_type', $this, 'delete_room_type');
@@ -160,47 +163,36 @@ class HBS_Admin_Menu
         $settings['float_color_text'] = sanitize_hex_color($input['float_color_text']);
         $settings['float_color_btn'] = sanitize_hex_color($input['float_color_btn']);
 
-        // Optional booking URL for floating form redirect
-        // Booking Page URL - support relative paths
-        if (isset($input['booking_page_url']) && !empty($input['booking_page_url'])) {
-            $url = trim($input['booking_page_url']);
-            // If starts with /, prepend site URL
-            if (strpos($url, '/') === 0) {
-                $settings['booking_page_url'] = esc_url_raw(home_url($url));
-            } else {
-                $settings['booking_page_url'] = esc_url_raw($url);
-            }
-        } else {
-            $settings['booking_page_url'] = '';
-        }
+        // Page IDs - Store IDs directly instead of URLs for better efficiency
+        // Policies Page ID
+        $settings['policies_page_id'] = isset($input['policies_page_id']) ? intval($input['policies_page_id']) : 0;
 
-        // Policies Page - convert page ID to URL OR handle direct URL input
-        if (isset($input['policies_page_id']) && intval($input['policies_page_id']) > 0) {
-            $settings['policies_url'] = get_permalink(intval($input['policies_page_id']));
-        } elseif (isset($input['policies_url']) && !empty($input['policies_url'])) {
-            // Support direct URL input with relative path
-            $url = trim($input['policies_url']);
-            if (strpos($url, '/') === 0) {
-                $settings['policies_url'] = esc_url_raw(home_url($url));
-            } else {
-                $settings['policies_url'] = esc_url_raw($url);
-            }
-        } else {
-            $settings['policies_url'] = '';
-        }
+        // Booking Page ID
+        $settings['book_page_id'] = isset($input['book_page_id']) ? intval($input['book_page_id']) : 0;
+
+        // Thank You Page ID
+        $settings['thankyou_page_id'] = isset($input['thankyou_page_id']) ? intval($input['thankyou_page_id']) : 0;
+
+        // Keep URL versions for backward compatibility (generated from IDs when needed)
+        $settings['policies_url'] = $settings['policies_page_id'] > 0 ? get_permalink($settings['policies_page_id']) : '';
+        $settings['booking_page_url'] = $settings['book_page_id'] > 0 ? get_permalink($settings['book_page_id']) : '';
+        $settings['thankyou_page_url'] = $settings['thankyou_page_id'] > 0 ? get_permalink($settings['thankyou_page_id']) : '';
+
+        // Hotel Logo ID for email templates
+        $settings['hotel_logo_id'] = isset($input['hotel_logo_id']) ? intval($input['hotel_logo_id']) : 0;
+
 
         $settings['submit_btn_text'] = isset($input['submit_btn_text']) ? sanitize_text_field($input['submit_btn_text']) : '';
+
+        // Email template options
+        $settings['use_custom_staff_template'] = isset($input['use_custom_staff_template']) ? 1 : 0;
+        $settings['use_custom_guest_template'] = isset($input['use_custom_guest_template']) ? 1 : 0;
 
         // Custom CSS
         $settings['custom_css_booking_form'] = isset($input['custom_css_booking_form']) ? wp_strip_all_tags($input['custom_css_booking_form']) : '';
         $settings['custom_css_floating_form'] = isset($input['custom_css_floating_form']) ? wp_strip_all_tags($input['custom_css_floating_form']) : '';
 
-        // Thank You Page - convert page ID to URL
-        if (isset($input['thankyou_page_id']) && intval($input['thankyou_page_id']) > 0) {
-            $settings['thankyou_page_url'] = get_permalink(intval($input['thankyou_page_id']));
-        } else {
-            $settings['thankyou_page_url'] = '';
-        }
+
 
         update_option(HBS_Config::OPTION_KEY, $settings);
 
@@ -222,6 +214,32 @@ class HBS_Admin_Menu
         }
 
         wp_redirect(admin_url('admin.php?page=hbs_recent_bookings&deleted=true'));
+        exit;
+    }
+
+    public function bulk_delete_bookings()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Permisos insuficientes.', 'hotel-booking-system'));
+        }
+
+        check_admin_referer('hbs_bulk_delete', 'hbs_bulk_nonce');
+
+        $bulk_action = isset($_POST['bulk_action']) ? sanitize_text_field($_POST['bulk_action']) : '';
+        $booking_ids = isset($_POST['booking_ids']) ? array_map('intval', $_POST['booking_ids']) : array();
+
+        if ($bulk_action === 'delete' && !empty($booking_ids)) {
+            $deleted_count = 0;
+            foreach ($booking_ids as $booking_id) {
+                if ($booking_id > 0) {
+                    HBS_Booking::delete($booking_id);
+                    $deleted_count++;
+                }
+            }
+            wp_redirect(admin_url('admin.php?page=hbs_recent_bookings&bulk_deleted=' . $deleted_count));
+        } else {
+            wp_redirect(admin_url('admin.php?page=hbs_recent_bookings'));
+        }
         exit;
     }
 
