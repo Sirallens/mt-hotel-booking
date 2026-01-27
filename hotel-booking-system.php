@@ -12,6 +12,10 @@ if (!defined('WPINC')) {
     die;
 }
 
+// Output buffering to prevent "headers already sent" errors from WordPress warnings/notices
+// This captures any unexpected output before headers are sent during AJAX responses
+ob_start();
+
 // Requerimos las clases necesarias
 require_once plugin_dir_path(__FILE__) . 'includes/class-hbs-config.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-hbs-loader.php';

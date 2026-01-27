@@ -213,7 +213,7 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
         <label class="hbs-checkbox-wrapper">
             <input type="checkbox" name="accept_quote_terms" required>
             <span class="hbs-checkbox-text">
-                <?php echo esc_html__('Entiendo que esta es una solicitud de cotización y que debo reservar con al menos 2 días de anticipación.', 'hotel-booking-system'); ?>
+                <?php echo esc_html__('Entiendo que esta es una solicitud de cotización sujeto a disponibilidad y que se me recomienda reservar con al menos 2 días de anticipación.', 'hotel-booking-system'); ?>
             </span>
         </label>
 

@@ -531,6 +531,12 @@ class HBS_Public
      */
     public function handle_booking()
     {
+        // Clean any buffered output (warnings/notices) to ensure clean JSON response
+        // This works in tandem with ob_start() in the main plugin file
+        if (ob_get_length()) {
+            ob_clean();
+        }
+
         // Nonce.
         check_ajax_referer(HBS_Config::NONCE_ACTION, HBS_Config::NONCE_KEY);
 
