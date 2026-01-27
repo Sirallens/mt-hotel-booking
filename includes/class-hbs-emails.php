@@ -29,7 +29,7 @@ class HBS_Emails
             return;
         }
 
-        $subject_template = !empty($opts['email_staff_subject']) ? $opts['email_staff_subject'] : '[Nueva Reservación] Solicitud #{booking_id} - {guest_name}';
+        $subject_template = !empty($opts['email_staff_subject']) ? $opts['email_staff_subject'] : '[Nueva Solicitud de Cotización] - {guest_name}';
         $subject = self::replace_placeholders($subject_template, $booking_id, $booking);
 
         // Proper headers for better deliverability
@@ -64,7 +64,7 @@ class HBS_Emails
         }
 
         $opts = get_option(HBS_Config::OPTION_KEY, []);
-        $subject_template = !empty($opts['email_guest_subject']) ? $opts['email_guest_subject'] : 'Confirmación de Solicitud de Reservación #{booking_id}';
+        $subject_template = !empty($opts['email_guest_subject']) ? $opts['email_guest_subject'] : 'Confirmación de Solicitud de Cotización';
         $subject = self::replace_placeholders($subject_template, $booking_id, $booking);
 
         // Proper headers for better deliverability
@@ -272,6 +272,202 @@ class HBS_Emails
                                         </tr>
                                     </table>
 
+                                    <?php
+                                    // Calculate price breakdown for staff email
+                                    $opts_breakdown = get_option(HBS_Config::OPTION_KEY, []);
+                                    $prices_config = [
+                                        'single' => isset($opts_breakdown['price_single']) ? floatval($opts_breakdown['price_single']) : 1850.00,
+                                        'double' => isset($opts_breakdown['price_double']) ? floatval($opts_breakdown['price_double']) : 2100.00,
+                                        'extra_adult' => isset($opts_breakdown['price_extra_adult']) ? floatval($opts_breakdown['price_extra_adult']) : 450.00,
+                                        'extra_kid' => isset($opts_breakdown['price_extra_kid']) ? floatval($opts_breakdown['price_extra_kid']) : 250.00,
+                                    ];
+
+                                    // Calculate breakdown (mimics calculate_total logic)
+                                    $adults_int = intval($data['adults_count']);
+                                    $kids_int = intval($data['kids_count']);
+                                    $total_guests_int = $adults_int + $kids_int;
+                                    $room_type_slug = $data['room_type'];
+                                    $nights_int = intval((new DateTime($data['check_out_date']))->diff(new DateTime($data['check_in_date']))->days);
+
+                                    $base_price = 0.0;
+                                    $extra_adults_count = 0;
+                                    $extra_kids_count = 0;
+                                    $extra_adults_cost = 0.0;
+                                    $extra_kids_cost = 0.0;
+
+                                    if ($room_type_slug === 'single') {
+                                        $base_price = $prices_config['single'];
+                                        if ($total_guests_int > 2) {
+                                            $extra_adults_count = $total_guests_int - 2;
+                                            $extra_adults_cost = $extra_adults_count * $prices_config['extra_adult'];
+                                        }
+                                    } else {
+                                        $base_price = $prices_config['double'];
+                                        if ($total_guests_int > 2) {
+                                            $extra_adults_count = max($adults_int - 2, 0);
+                                            $extra_kids_count = max(($total_guests_int - 2) - $extra_adults_count, 0);
+                                            $extra_adults_cost = $extra_adults_count * $prices_config['extra_adult'];
+                                            $extra_kids_cost = $extra_kids_count * $prices_config['extra_kid'];
+                                        }
+                                    }
+
+                                    $subtotal_per_night = $base_price + $extra_adults_cost + $extra_kids_cost;
+                                    $calculated_total = $subtotal_per_night * $nights_int;
+                                    ?>
+
+                                    <!-- Price Breakdown Card -->
+                                    <table role="presentation"
+                                        style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background-color: #f0fdf4; border-radius: 8px; border: 1px solid #86efac;">
+                                        <tr>
+                                            <td style="padding: 20px;">
+                                                <h2
+                                                    style="margin: 0 0 15px; color: #15803d; font-size: 18px; font-weight: 600;">
+                                                    💰
+                                                    <?php _e('Desglose de Precios', 'hotel-booking-system'); ?>
+                                                </h2>
+                                                <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                                    <tr>
+                                                        <td
+                                                            style="padding: 8px 0; color: #666666; font-size: 14px; width: 60%;">
+                                                            <strong>
+                                                                <?php _e('Tipo de habitación:', 'hotel-booking-system'); ?>
+                                                            </strong>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 8px 0; color: #000000; font-size: 14px; text-align: right;">
+                                                            {room_type}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding: 8px 0; color: #666666; font-size: 14px;">
+                                                            <?php _e('Base por noche (incluye 2 personas)', 'hotel-booking-system'); ?>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 8px 0; color: #000000; font-size: 14px; text-align: right;">
+                                                            $
+                                                            <?php echo number_format($base_price, 2); ?>
+                                                        </td>
+                                                    </tr>
+                                                    <?php if ($extra_adults_count > 0): ?>
+                                                        <tr>
+                                                            <td style="padding: 8px 0; color: #666666; font-size: 14px;">
+                                                                <?php printf(__('Adultos extra (%d × $%s)', 'hotel-booking-system'), $extra_adults_count, number_format($prices_config['extra_adult'], 2)); ?>
+                                                            </td>
+                                                            <td
+                                                                style="padding: 8px 0; color: #000000; font-size: 14px; text-align: right;">
+                                                                $
+                                                                <?php echo number_format($extra_adults_cost, 2); ?>
+                                                            </td>
+                                                        </tr>
+                                                    <?php endif; ?>
+                                                    <?php if ($extra_kids_count > 0): ?>
+                                                        <tr>
+                                                            <td style="padding: 8px 0; color: #666666; font-size: 14px;">
+                                                                <?php printf(__('Niños extra (%d × $%s)', 'hotel-booking-system'), $extra_kids_count, number_format($prices_config['extra_kid'], 2)); ?>
+                                                            </td>
+                                                            <td
+                                                                style="padding: 8px 0; color: #000000; font-size: 14px; text-align: right;">
+                                                                $
+                                                                <?php echo number_format($extra_kids_cost, 2); ?>
+                                                            </td>
+                                                        </tr>
+                                                    <?php endif; ?>
+                                                    <tr style="border-top: 1px dashed #86efac;">
+                                                        <td style="padding: 12px 0 8px; color: #000000; font-size: 14px;">
+                                                            <strong>
+                                                                <?php _e('Subtotal por noche:', 'hotel-booking-system'); ?>
+                                                            </strong>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 12px 0 8px; color: #000000; font-size: 14px; text-align: right;">
+                                                            <strong>$
+                                                                <?php echo number_format($subtotal_per_night, 2); ?>
+                                                            </strong>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding: 8px 0; color: #666666; font-size: 14px;">
+                                                            <?php _e('Noches:', 'hotel-booking-system'); ?>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 8px 0; color: #000000; font-size: 14px; text-align: right;">
+                                                            ×
+                                                            <?php echo $nights_int; ?>
+                                                        </td>
+                                                    </tr>
+                                                    <tr style="border-top: 2px solid #15803d;">
+                                                        <td style="padding: 15px 0 8px; color: #15803d; font-size: 16px;">
+                                                            <strong>
+                                                                <?php _e('TOTAL ESTANCIA:', 'hotel-booking-system'); ?>
+                                                            </strong>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 15px 0 8px; color: #15803d; font-size: 20px; font-weight: 700; text-align: right;">
+                                                            $
+                                                            <?php echo number_format($calculated_total, 2); ?> MXN
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <!-- Configured Prices Reference Card -->
+                                    <table role="presentation"
+                                        style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background-color: #f5f5f5; border-radius: 8px; border: 1px solid #d1d5db;">
+                                        <tr>
+                                            <td style="padding: 20px;">
+                                                <h2
+                                                    style="margin: 0 0 15px; color: #374151; font-size: 16px; font-weight: 600;">
+                                                    📊
+                                                    <?php _e('Precios Configurados (Referencia)', 'hotel-booking-system'); ?>
+                                                </h2>
+                                                <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                                    <tr>
+                                                        <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">
+                                                            <?php _e('Habitación Sencilla:', 'hotel-booking-system'); ?>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 6px 0; color: #374151; font-size: 13px; text-align: right;">
+                                                            $
+                                                            <?php echo number_format($prices_config['single'], 2); ?> MXN
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">
+                                                            <?php _e('Habitación Doble:', 'hotel-booking-system'); ?>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 6px 0; color: #374151; font-size: 13px; text-align: right;">
+                                                            $
+                                                            <?php echo number_format($prices_config['double'], 2); ?> MXN
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">
+                                                            <?php _e('Adulto Extra:', 'hotel-booking-system'); ?>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 6px 0; color: #374151; font-size: 13px; text-align: right;">
+                                                            $
+                                                            <?php echo number_format($prices_config['extra_adult'], 2); ?> MXN
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">
+                                                            <?php _e('Niño Extra (≥4 años):', 'hotel-booking-system'); ?>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 6px 0; color: #374151; font-size: 13px; text-align: right;">
+                                                            $
+                                                            <?php echo number_format($prices_config['extra_kid'], 2); ?> MXN
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+
                                     <!-- Action Required -->
                                     <table role="presentation"
                                         style="width: 100%; border-collapse: collapse; background-color: #fff8f3; border-left: 4px solid #e88e4b; border-radius: 4px;">
@@ -372,8 +568,9 @@ class HBS_Emails
                                     </p>
 
                                     <p style="margin: 0 0 25px; color: #333333; font-size: 16px; line-height: 1.6;">
-                                        Hemos recibido su solicitud de reservación (#{booking_id}). Nuestro equipo la está
-                                        revisando y nos pondremos en contacto con usted pronto para confirmarla.
+                                        Hemos recibido su solicitud. Nuestro equipo la está
+                                        revisando. Nos pondremos en contacto con usted pronto para confirmarla y proceder con
+                                        los siguientes pasos.
                                     </p>
 
                                     <!-- Booking Summary -->
@@ -420,15 +617,20 @@ class HBS_Emails
                                                             {kids_count} <?php _e('Niños', 'hotel-booking-system'); ?>
                                                         </td>
                                                     </tr>
-                                                    <tr style="border-top: 2px solid #e0e0e0;">
-                                                        <td style="padding: 15px 0 8px; color: #000000; font-size: 16px;">
-                                                            <strong><?php _e('Total Estimado:', 'hotel-booking-system'); ?></strong>
-                                                        </td>
-                                                        <td
-                                                            style="padding: 15px 0 8px; color: #e88e4b; font-size: 20px; font-weight: 700;">
-                                                            ${total_price} MXN
-                                                        </td>
-                                                    </tr>
+                                                    <?php
+                                                    $opts = get_option(HBS_Config::OPTION_KEY, []);
+                                                    if (!empty($opts['show_price_breakdown'])):
+                                                        ?>
+                                                        <tr style="border-top: 2px solid #e0e0e0;">
+                                                            <td style="padding: 15px 0 8px; color: #000000; font-size: 16px;">
+                                                                <strong><?php _e('Total Estimado:', 'hotel-booking-system'); ?></strong>
+                                                            </td>
+                                                            <td
+                                                                style="padding: 15px 0 8px; color: #e88e4b; font-size: 20px; font-weight: 700;">
+                                                                ${total_price} MXN
+                                                            </td>
+                                                        </tr>
+                                                    <?php endif; ?>
                                                 </table>
                                             </td>
                                         </tr>

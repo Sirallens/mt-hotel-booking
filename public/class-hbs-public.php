@@ -167,6 +167,7 @@ class HBS_Public
                 'prices' => $prices,
                 'thankyou_url' => !empty($options['thankyou_page_url']) ? esc_url($options['thankyou_page_url']) : '',
                 'room_types' => $room_types,
+                'show_price_breakdown' => !empty($options['show_price_breakdown']),
             )
         );
     }
@@ -229,18 +230,14 @@ class HBS_Public
         ?>
         <div class="hbs-confirmation hbs-success">
             <div class="hbs-confirmation-header">
-                <h2><?php esc_html_e('¡Reservación Recibida!', 'hotel-booking-system'); ?></h2>
+                <h2><?php esc_html_e('¡Solicitud Recibida!', 'hotel-booking-system'); ?></h2>
                 <p class="hbs-confirmation-subtitle">
-                    <?php printf(esc_html__('Gracias %s, hemos recibido su solicitud de reservación.', 'hotel-booking-system'), '<strong>' . esc_html($booking['guest_name']) . '</strong>'); ?>
+                    <?php printf(esc_html__('Gracias %s, hemos recibido su solicitud.', 'hotel-booking-system'), '<strong>' . esc_html($booking['guest_name']) . '</strong>'); ?>
                 </p>
             </div>
 
             <div class="hbs-confirmation-details">
                 <table class="hbs-confirmation-table">
-                    <tr>
-                        <th><?php esc_html_e('ID de Reservación', 'hotel-booking-system'); ?></th>
-                        <td><strong>#<?php echo esc_html($booking_id); ?></strong></td>
-                    </tr>
                     <tr>
                         <th><?php esc_html_e('Check-in', 'hotel-booking-system'); ?></th>
                         <td><?php echo esc_html($booking['check_in_date']); ?></td>
@@ -258,10 +255,15 @@ class HBS_Public
                         <td><?php printf(esc_html__('%d Adultos, %d Niños', 'hotel-booking-system'), $booking['adults_count'], $booking['kids_count']); ?>
                         </td>
                     </tr>
-                    <tr class="hbs-total-row">
-                        <th><?php esc_html_e('Total Est', 'hotel-booking-system'); ?></th>
-                        <td><strong>$<?php echo esc_html(number_format($booking['total_price'], 2)); ?> MXN</strong></td>
-                    </tr>
+                    <?php
+                    $opts_confirmation = get_option(HBS_Config::OPTION_KEY, []);
+                    if (!empty($opts_confirmation['show_price_breakdown'])):
+                        ?>
+                        <tr class="hbs-total-row">
+                            <th><?php esc_html_e('Total Est', 'hotel-booking-system'); ?></th>
+                            <td><strong>$<?php echo esc_html(number_format($booking['total_price'], 2)); ?> MXN</strong></td>
+                        </tr>
+                    <?php endif; ?>
                 </table>
             </div>
 

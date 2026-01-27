@@ -305,7 +305,9 @@
             // Handle capacity error
             if (rules.error) {
                 $hint.text(rules.hint + ' — ' + rules.error);
-                $breakdown.html('<p style="color:#a00;font-weight:bold;">' + rules.error + '</p>');
+                if (window.HBS_VARS && window.HBS_VARS.show_price_breakdown) {
+                    $breakdown.html('<p style="color:#a00;font-weight:bold;">' + rules.error + '</p>');
+                }
                 $totalField.val('0');
                 $submit.prop('disabled', true);
                 return;
@@ -337,7 +339,11 @@
 
             // Compute pricing
             const pricing = computeTotals(selectedRoom, adults, kids, nights, prices);
-            renderBreakdown($breakdown, pricing, nights, prices, selectedRoom);
+
+            // Only render breakdown if enabled in settings
+            if (window.HBS_VARS && window.HBS_VARS.show_price_breakdown) {
+                renderBreakdown($breakdown, pricing, nights, prices, selectedRoom);
+            }
 
             // Set hidden total
             $totalField.val(pricing.total.toFixed(2));
@@ -386,6 +392,9 @@
                 return;
             }
 
+            // Show loading overlay
+            const $overlay = $('#hbs-loading-overlay');
+            $overlay.fadeIn(200);
             $submit.prop('disabled', true);
 
             const data = $form.serialize();
@@ -401,7 +410,7 @@
                         const bookingId = resp.data && resp.data.booking_id ? resp.data.booking_id : 0;
                         const thankyouUrl = (window.HBS_VARS && window.HBS_VARS.thankyou_url) ? window.HBS_VARS.thankyou_url : '';
 
-                        // If thank you URL is set, redirect
+                        // If thank you URL is set, redirect (keep overlay visible)
                         if (thankyouUrl && bookingId) {
                             const separator = thankyouUrl.indexOf('?') > -1 ? '&' : '?';
                             window.location.href = thankyouUrl + separator + 'booking_id=' + bookingId;
@@ -425,6 +434,8 @@
                     showMessage('Ocurrió un error, inténtal de nuevo.', false);
                 })
                 .always(function () {
+                    // Hide overlay and re-enable button (unless redirecting)
+                    $overlay.fadeOut(200);
                     $submit.prop('disabled', false);
                 });
 

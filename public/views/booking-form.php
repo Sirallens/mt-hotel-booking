@@ -50,7 +50,7 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
     </div>
 
     <div class="hbs-header">
-        <h3><?php echo esc_html__('Solicitud de reservación', 'hotel-booking-system'); ?></h3>
+        <h3><?php echo esc_html__('Solicitud de Cotización', 'hotel-booking-system'); ?></h3>
         <p class="hbs-subtitle">
             <?php echo esc_html__('Complete sus datos para recibir una cotización oficial.', 'hotel-booking-system'); ?>
         </p>
@@ -114,7 +114,7 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
         <div class="hbs-field">
             <label for="hbs-kids">
                 <?php echo esc_html__('Niños', 'hotel-booking-system'); ?>
-                <span class="hbs-sub-label">(≥4 años)</span>
+                <span class="hbs-sub-label">(4 - 11 años)</span>
             </label>
             <div class="hbs-input-wrapper">
                 <input id="hbs-kids" type="number" name="kids_count" min="0"
@@ -217,10 +217,12 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
             </span>
         </label>
 
-        <!-- Desglose de precio -->
-        <div id="hbs-price-breakdown" class="hbs-price-box"></div>
+        <?php if (!empty($opts['show_price_breakdown'])): ?>
+            <!-- Desglose de precio -->
+            <div id="hbs-price-breakdown" class="hbs-price-box"></div>
 
-        <input type="hidden" name="total_price" value="0">
+            <input type="hidden" name="total_price" value="0">
+        <?php endif; ?>
 
         <button type="submit" class="hbs-btn-primary">
             <?php echo esc_html(!empty($opts['submit_btn_text']) ? $opts['submit_btn_text'] : __('Confirmar Reserva', 'hotel-booking-system')); ?>
@@ -233,6 +235,18 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
         </div>
     </noscript>
 </form>
+
+<!-- Loading Overlay -->
+<div id="hbs-loading-overlay" class="hbs-loading-overlay" style="display: none;" role="status" aria-live="assertive">
+    <div class="hbs-loading-content">
+        <div class="hbs-dots-spinner">
+            <span class="hbs-dot"></span>
+            <span class="hbs-dot"></span>
+            <span class="hbs-dot"></span>
+        </div>
+        <p class="hbs-loading-text"><?php echo esc_html__('Enviando tu solicitud...', 'hotel-booking-system'); ?></p>
+    </div>
+</div>
 
 <!-- Contenedor para mensajes de éxito/error del envío AJAX -->
 <div id="hbs-form-message" role="status" aria-live="polite"></div>

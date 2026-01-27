@@ -147,6 +147,16 @@ if ($thankyou_page_id === 0 && !empty($opts['thankyou_page_url'])) {
                     <input name="price_extra_kid" type="number" step="0.01" id="price_extra_kid"
                         value="<?php echo esc_attr($p_ex_kid); ?>" class="hbs-input">
                 </div>
+                
+                <div class="hbs-field hbs-full-width" style="margin-top: 20px;">
+                    <label class="hbs-toggle">
+                        <input name="show_price_breakdown" type="checkbox" value="1" <?php checked(!empty($opts['show_price_breakdown']), true); ?>>
+                        <span class="hbs-label"><?php esc_html_e('Mostrar Desglose de Precios', 'hotel-booking-system'); ?></span>
+                    </label>
+                    <p class="hbs-description" style="margin-left: 30px;">
+                        <?php esc_html_e('Si está activado, se mostrará el desglose detallado de precios en el formulario de reservación y en el correo de confirmación al cliente. Si está desactivado, se ocultará toda la información de precios en ambos lugares.', 'hotel-booking-system'); ?>
+                    </p>
+                </div>
             </div>
         </div>
 
