@@ -85,14 +85,19 @@ class HBS_Booking
         $guest_phone = sanitize_text_field($data['guest_phone']);
         $check_in_date = sanitize_text_field($data['check_in_date']); // Validate format below
         $nights = max(1, intval($data['nights']));
-        $room_type = in_array($data['room_type'], ['single', 'double']) ? $data['room_type'] : 'single';
+
+        // Validate room type exists
+        $room_types = HBS_Room_Types::get_all();
+        $room_type = isset($room_types[$data['room_type']]) ? $data['room_type'] : 'single';
+        $room = HBS_Room_Types::get($room_type);
+
         $adults = max(1, intval($data['adults_count']));
         $kids = max(0, intval($data['kids_count']));
         $total_guests = $adults + $kids;
 
-        // Rules
-        if ($total_guests > 4) {
-            return new WP_Error('hbs_limit', __('La capacidad máxima es de 4 personas.', 'hotel-booking-system'));
+        // Check capacity based on room type
+        if ($room && $total_guests > $room['max_capacity']) {
+            return new WP_Error('hbs_limit', sprintf(__('La capacidad máxima para este tipo de habitación es de %d personas.', 'hotel-booking-system'), $room['max_capacity']));
         }
 
         // Date format validation (Y-m-d)
@@ -148,28 +153,39 @@ class HBS_Booking
     /**
      * Pricing Engine.
      */
+    /**
+     * Calculate total price based on dynamic occupancy parameters
+     * Now uses base_occupancy from room type configuration
+     */
     public static function calculate_total($room_type, $adults, $kids, $nights, $prices)
     {
         $base = 0.0;
         $extras_cost = 0.0;
         $total_guests = $adults + $kids;
 
-        if ('single' === $room_type) {
-            $base = $prices['single'];
-            // Single: All guests above 2 are charged as extra adults
-            if ($total_guests > 2) {
-                $extras = $total_guests - 2;
-                $extras_cost = $extras * $prices['extra_adult'];
-            }
+        // Get room type configuration for base occupancy
+        $room_data = HBS_Room_Types::get($room_type);
+        $base_occupancy = isset($room_data['base_occupancy']) ? (int) $room_data['base_occupancy'] : 2;
+        $base_price = isset($room_data['base_price']) ? (float) $room_data['base_price'] : 0;
+
+        // Use configured base price if available, otherwise fallback to  prices array
+        if ($base_price > 0) {
+            $base = $base_price;
         } else {
-            // Double
-            $base = $prices['double'];
-            if ($total_guests > 2) {
-                $extra_adults = max($adults - 2, 0);
-                // Remaining slots above 2 (after accounting for extra adults) are kids
-                // Total extra people = total - 2
-                // extra_kids = (total - 2) - extra_adults
-                $extra_kids = max(($total_guests - 2) - $extra_adults, 0);
+            $base = 'single' === $room_type ? $prices['single'] : $prices['double'];
+        }
+
+        // Calculate extras only if total guests exceed base occupancy
+        if ($total_guests > $base_occupancy) {
+            $overflow = $total_guests - $base_occupancy;
+
+            if ('single' === $room_type) {
+                // Single: All overflow guests are charged as extra adults
+                $extras_cost = $overflow * $prices['extra_adult'];
+            } else {
+                // Double or other: Extra adults first, then kids
+                $extra_adults = max($adults - $base_occupancy, 0);
+                $extra_kids = $total_guests - $base_occupancy - $extra_adults;
 
                 $extras_cost += ($extra_adults * $prices['extra_adult']);
                 $extras_cost += ($extra_kids * $prices['extra_kid']);

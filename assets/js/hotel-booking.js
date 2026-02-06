@@ -97,57 +97,139 @@
      *    hint: string
      *  }
      * ----------------------------------------------------- */
+    /**
+     * Apply Room Rules - Dynamic Validation Based on Occupancy Parameters
+     * This mirrors the backend HBS_Occupancy_Validator logic
+     */
     function applyRoomRules(adults, kids) {
         const total = adults + kids;
-        // Capacity hard limit
-        if (total > 4) {
+
+        // Get room types configuration
+        const roomTypes = window.HBS_VARS && window.HBS_VARS.room_types ? window.HBS_VARS.room_types : {};
+
+        // If no room types configured, return error
+        if (Object.keys(roomTypes).length === 0) {
             return {
                 forced: null,
                 choice: false,
-                error: 'Capacidad máxima 4 personas.',
-                hint: 'Capacidad excedida'
+                error: 'Error de configuración: tipos de habitación no disponibles.',
+                hint: 'Por favor contacte al administrador'
             };
         }
 
-        // Auto SINGLE
-        if (adults === 1 && kids === 0) {
+        // Validate minimum requirements (at least 1 adult and 1 guest total)
+        if (adults < 1 || total < 1) {
             return {
-                forced: 'single',
+                forced: null,
+                choice: false,
+                error: 'Debe haber al menos 1 adulto y 1 huésped total.',
+                hint: 'Configuración inválida'
+            };
+        }
+
+        // Check each room type to see which ones can accommodate this occupancy
+        const compatibleRooms = [];
+        const errors = [];
+
+        for (const [slug, roomData] of Object.entries(roomTypes)) {
+            const validation = validateOccupancyForRoom(slug, roomData, adults, kids, total);
+
+            if (validation.valid) {
+                compatibleRooms.push({
+                    slug: slug,
+                    name: roomData.name
+                });
+            } else {
+                errors.push(validation.error);
+            }
+        }
+
+        // If no rooms fit, return error with most relevant message
+        if (compatibleRooms.length === 0) {
+            return {
+                forced: null,
+                choice: false,
+                error: errors[0] || 'Ninguna habitación disponible cumple con estos requisitos.',
+                hint: 'Reducir número de huéspedes'
+            };
+        }
+
+        // If only one room fits, force it
+        if (compatibleRooms.length === 1) {
+            return {
+                forced: compatibleRooms[0].slug,
                 choice: false,
                 error: null,
-                hint: 'Habitación Sencilla auto-seleccionada.'
+                hint: `${compatibleRooms[0].name} seleccionada automáticamente.`
             };
         }
 
-        // Auto DOUBLE
-        if (adults > 2 || total > 3) {
-            return {
-                forced: 'double',
-                choice: false,
-                error: null,
-                hint: 'Se requiere Habitación Doble.'
-            };
-        }
-
-        // Choice scenarios:
-        // (2 adults, 0–1 kids) OR (1 adult, 1–2 kids) with total ≤3
+        // Multiple rooms fit, allow choice
+        const roomNames = compatibleRooms.map(r => r.name).join(' o ');
         return {
             forced: null,
             choice: true,
             error: null,
-            hint: 'Puede elegir Habitación Sencilla o Doble.'
+            hint: `Puede elegir ${roomNames}.`
+        };
+    }
+
+    /**
+     * Validate if a specific room can accommodate the given occupancy
+     * Mirrors HBS_Occupancy_Validator::validate()
+     */
+    function validateOccupancyForRoom(slug, roomData, adults, kids, total) {
+        const maxAdults = roomData.max_adults || 3;
+        const maxKids = roomData.max_kids || 3;
+        const maxTotal = roomData.max_total || 4;
+        const baseOccupancy = roomData.base_occupancy || 2;
+        const overflowRule = roomData.overflow_rule || 'kids_only';
+
+        // Check hard limits
+        if (adults > maxAdults) {
+            return {
+                valid: false,
+                error: `Máximo ${maxAdults} adultos para ${roomData.name}.`
+            };
+        }
+
+        if (kids > maxKids) {
+            return {
+                valid: false,
+                error: `Máximo ${maxKids} niños (4-11 años) para ${roomData.name}.`
+            };
+        }
+
+        if (total > maxTotal) {
+            return {
+                valid: false,
+                error: `Capacidad máxima de ${maxTotal} personas para ${roomData.name}.`
+            };
+        }
+
+        // Check overflow rules - only apply if exceeding base occupancy
+        if (total > baseOccupancy) {
+            if (overflowRule === 'kids_only') {
+                // Only kids can exceed base occupancy, max 2 adults
+                if (adults > 2) {
+                    return {
+                        valid: false,
+                        error: `Para ${roomData.name}, solo se permiten 2 adultos. Huéspedes adicionales deben ser niños.`
+                    };
+                }
+            }
+            // 'any' rule: both adults and kids can exceed, already checked by hard limits above
+        }
+
+        return {
+            valid: true,
+            error: null
         };
     }
 
     /* -------------------------------------------------------
-     * Compute pricing totals (mirrors server rules)
-     * SINGLE:
-     *   Base covers first 2 guests.
-     *   All guests past 2 => extra adult price.
-     * DOUBLE:
-     *   Base covers first 2 guests.
-     *   extraAdults = max(adults - 2, 0)
-     *   extraKids   = (total - 2 - extraAdults)
+     * Compute pricing totals using dynamic occupancy parameters
+     * Now uses base_occupancy from room type configuration
      * ----------------------------------------------------- */
     function computeTotals(roomType, adults, kids, nights, prices) {
         const totalGuests = adults + kids;
@@ -156,20 +238,28 @@
         let extraAdults = 0;
         let extraKids = 0;
 
-        if (roomType === 'single') {
-            base = prices.single;
-            if (totalGuests > 2) {
-                const over = totalGuests - 2;
-                extras = over * prices.extra_adult;
-                extraAdults = over;
+        // Get room configuration
+        const roomTypes = window.HBS_VARS && window.HBS_VARS.room_types ? window.HBS_VARS.room_types : {};
+        const roomConfig = roomTypes[roomType] || {};
+        const baseOccupancy = roomConfig.base_occupancy || 2; // Fallback to 2 if not configured
+        const basePrice = roomConfig.base_price || (roomType === 'single' ? prices.single : prices.double);
+
+        base = basePrice;
+
+        // Calculate extras only if total guests exceed base occupancy
+        if (totalGuests > baseOccupancy) {
+            const overflow = totalGuests - baseOccupancy;
+
+            if (roomType === 'single') {
+                // For single rooms, treat all overflow as extra adults
+                extras = overflow * prices.extra_adult;
+                extraAdults = overflow;
                 extraKids = 0;
-            }
-        } else {
-            // default treat as double
-            base = prices.double;
-            if (totalGuests > 2) {
-                extraAdults = Math.max(adults - 2, 0);
-                extraKids = totalGuests - 2 - extraAdults;
+            } else {
+                // For other rooms (typically 'double'), calculate separately
+                // Extra adults first, then the rest are kids
+                extraAdults = Math.max(adults - baseOccupancy, 0);
+                extraKids = totalGuests - baseOccupancy - extraAdults;
                 extras = (extraAdults * prices.extra_adult) + (extraKids * prices.extra_kid);
             }
         }
@@ -182,6 +272,7 @@
             extras,
             subtotalPerNight,
             total,
+            baseOccupancy, // Include for rendering
             detail: {
                 extraAdults,
                 extraKids
@@ -196,9 +287,12 @@
         if (!$target.length) return;
 
         const r = pricing;
+        const baseOcc = r.baseOccupancy || 2; // Use dynamic base occupancy
         const rows = [];
-        rows.push(`<tr><td>Tipo de habitación</td><td>${roomType === 'single' ? 'Sencilla' : 'Doble'}</td></tr>`);
-        rows.push(`<tr><td>Base por noche (incluye 2 personas)</td><td>${numberMXN(r.base)}</td></tr>`);
+        const roomTypeName = roomType === 'single' ? 'Sencilla' : 'Doble';
+
+        rows.push(`<tr><td>Tipo de habitación</td><td>${roomTypeName}</td></tr>`);
+        rows.push(`<tr><td>Base por noche (incluye ${baseOcc} ${baseOcc === 1 ? 'persona' : 'personas'})</td><td>${numberMXN(r.base)}</td></tr>`);
 
         if (r.detail.extraAdults || r.detail.extraKids) {
             if (r.detail.extraAdults) {
@@ -225,13 +319,19 @@
     function initFlatpickrIfPresent() {
         if (window.flatpickr && $('.js-flatpickr').length) {
             try {
-                window.flatpickr('.js-flatpickr', {
-                    dateFormat: 'Y-m-d',
-                    minDate: 'today',
-                    locale: (window.flatpickr).l10ns && (window.flatpickr).l10ns.es ? 'es' : undefined
+                // Initialize each element individually to handle dynamically added elements
+                $('.js-flatpickr').each(function () {
+                    // Check if this element already has a flatpickr instance
+                    if (!this._flatpickr) {
+                        window.flatpickr(this, {
+                            dateFormat: 'Y-m-d',
+                            minDate: 'today',
+                            locale: (window.flatpickr).l10ns && (window.flatpickr).l10ns.es ? 'es' : undefined
+                        });
+                    }
                 });
             } catch (e) {
-                // Fail silently
+                console.error('Flatpickr initialization error:', e);
             }
         }
     }
@@ -299,7 +399,9 @@
             // Handle capacity error
             if (rules.error) {
                 $hint.text(rules.hint + ' — ' + rules.error);
-                $breakdown.html('<p style="color:#a00;font-weight:bold;">' + rules.error + '</p>');
+                if (window.HBS_VARS && window.HBS_VARS.show_price_breakdown) {
+                    $breakdown.html('<p style="color:#a00;font-weight:bold;">' + rules.error + '</p>');
+                }
                 $totalField.val('0');
                 $submit.prop('disabled', true);
                 return;
@@ -331,7 +433,11 @@
 
             // Compute pricing
             const pricing = computeTotals(selectedRoom, adults, kids, nights, prices);
-            renderBreakdown($breakdown, pricing, nights, prices, selectedRoom);
+
+            // Only render breakdown if enabled in settings
+            if (window.HBS_VARS && window.HBS_VARS.show_price_breakdown) {
+                renderBreakdown($breakdown, pricing, nights, prices, selectedRoom);
+            }
 
             // Set hidden total
             $totalField.val(pricing.total.toFixed(2));
@@ -380,6 +486,9 @@
                 return;
             }
 
+            // Show loading overlay
+            const $overlay = $('#hbs-loading-overlay');
+            $overlay.fadeIn(200);
             $submit.prop('disabled', true);
 
             const data = $form.serialize();
@@ -392,6 +501,17 @@
             })
                 .done(function (resp) {
                     if (resp && resp.success) {
+                        const bookingId = resp.data && resp.data.booking_id ? resp.data.booking_id : 0;
+                        const thankyouUrl = (window.HBS_VARS && window.HBS_VARS.thankyou_url) ? window.HBS_VARS.thankyou_url : '';
+
+                        // If thank you URL is set, redirect (keep overlay visible)
+                        if (thankyouUrl && bookingId) {
+                            const separator = thankyouUrl.indexOf('?') > -1 ? '&' : '?';
+                            window.location.href = thankyouUrl + separator + 'booking_id=' + bookingId;
+                            return;
+                        }
+
+                        // Fallback to inline message
                         const msg = resp.data && resp.data.msg ? resp.data.msg : 'Solicitud enviada correctamente.';
                         showMessage(msg, true);
                         // Preserve date; reset others
@@ -405,9 +525,11 @@
                     }
                 })
                 .fail(function () {
-                    showMessage('Ocurrió un error, inténtalo de nuevo.', false);
+                    showMessage('Ocurrió un error, inténtal de nuevo.', false);
                 })
                 .always(function () {
+                    // Hide overlay and re-enable button (unless redirecting)
+                    $overlay.fadeOut(200);
                     $submit.prop('disabled', false);
                 });
 
@@ -442,10 +564,27 @@
         // Initial compute (in case no URL params)
         updateUI();
 
-        // Flatpickr optional
-        initFlatpickrIfPresent();
-
         // Attach submit logic
         attachSubmitHandler($form, updateUI);
+    });
+
+    // ===============================================================
+    // FLATPICKR INITIALIZATION - Runs on ALL pages (including floating form only)
+    // ===============================================================
+    $(function () {
+        // Flatpickr optional - initial call
+        initFlatpickrIfPresent();
+
+        // Re-initialize multiple times to catch dynamically added elements (like floating form)
+        // This handles cases where elements load after document.ready
+        var retryCount = 0;
+        var maxRetries = 5;
+        var retryInterval = setInterval(function () {
+            initFlatpickrIfPresent();
+            retryCount++;
+            if (retryCount >= maxRetries) {
+                clearInterval(retryInterval);
+            }
+        }, 200); // Check every 200ms for up to 1 second total
     });
 })(jQuery);

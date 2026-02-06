@@ -26,6 +26,20 @@ class HBS_Admin_Menu
 
         // Delete booking action
         $this->loader->add_action('admin_post_hbs_delete_booking', $this, 'delete_booking');
+
+        // Bulk delete bookings action
+        $this->loader->add_action('admin_post_hbs_bulk_delete_bookings', $this, 'bulk_delete_bookings');
+
+        // Room type actions
+        $this->loader->add_action('admin_post_hbs_save_room_type', $this, 'save_room_type');
+        $this->loader->add_action('admin_post_hbs_delete_room_type', $this, 'delete_room_type');
+
+        // Import/Export actions
+        $this->loader->add_action('admin_post_hbs_export_settings', $this, 'export_settings');
+        $this->loader->add_action('admin_post_hbs_import_settings', $this, 'import_settings');
+
+        // AJAX action for export JSON generation
+        $this->loader->add_action('wp_ajax_hbs_generate_export_json', $this, 'generate_export_json');
     }
 
     public function enqueue_admin_assets($hook)
@@ -36,6 +50,9 @@ class HBS_Admin_Menu
         }
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
+
+        // Custom Admin CSS
+        wp_enqueue_style('hbs-admin-settings', plugins_url('../assets/css/admin-settings.css', __FILE__), [], '1.0.0');
 
         // Select2 for multiselect
         wp_enqueue_style('select2-css', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css');
@@ -71,6 +88,24 @@ class HBS_Admin_Menu
             'hbs_recent_bookings',
             [$this, 'render_recent_bookings_page']
         );
+
+        add_submenu_page(
+            'hbs_settings',
+            __('Tipos de Habitación', 'hotel-booking-system'),
+            __('Tipos de Habitación', 'hotel-booking-system'),
+            'manage_options',
+            'hbs_room_types',
+            [$this, 'render_room_types_page']
+        );
+
+        add_submenu_page(
+            'hbs_settings',
+            __('Importar/Exportar', 'hotel-booking-system'),
+            __('Importar/Exportar', 'hotel-booking-system'),
+            'manage_options',
+            'hbs_import_export',
+            [$this, 'render_import_export_page']
+        );
     }
 
     public function render_settings_page()
@@ -89,6 +124,22 @@ class HBS_Admin_Menu
         include plugin_dir_path(__FILE__) . 'views/recent-bookings-page.php';
     }
 
+    public function render_room_types_page()
+    {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        include plugin_dir_path(__FILE__) . 'views/room-types-page.php';
+    }
+
+    public function render_import_export_page()
+    {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        include plugin_dir_path(__FILE__) . 'views/import-export-page.php';
+    }
+
     public function save_settings()
     {
         if (!current_user_can('manage_options')) {
@@ -103,13 +154,13 @@ class HBS_Admin_Menu
 
         // Sanitize fields
         $settings['staff_emails'] = sanitize_text_field($input['staff_emails']);
-        $settings['policies_url'] = esc_url_raw($input['policies_url']);
         $settings['price_single'] = floatval($input['price_single']);
         $settings['price_double'] = floatval($input['price_double']);
         $settings['price_extra_adult'] = floatval($input['price_extra_adult']);
         $settings['price_extra_kid'] = floatval($input['price_extra_kid']);
         $settings['enable_custom_styles'] = isset($input['enable_custom_styles']) ? 1 : 0;
         $settings['floating_enabled'] = isset($input['floating_enabled']) ? 1 : 0;
+        $settings['show_price_breakdown'] = isset($input['show_price_breakdown']) ? 1 : 0; // FIX: Added missing checkbox
         $settings['guest_email_note'] = sanitize_textarea_field($input['guest_email_note']);
 
         // Email Configuration
@@ -137,10 +188,36 @@ class HBS_Admin_Menu
         $settings['float_color_text'] = sanitize_hex_color($input['float_color_text']);
         $settings['float_color_btn'] = sanitize_hex_color($input['float_color_btn']);
 
-        // Optional booking URL for floating form redirect
-        if (isset($input['booking_page_url'])) {
-            $settings['booking_page_url'] = esc_url_raw($input['booking_page_url']);
-        }
+        // Page IDs - Store IDs directly instead of URLs for better efficiency
+        // Policies Page ID
+        $settings['policies_page_id'] = isset($input['policies_page_id']) ? intval($input['policies_page_id']) : 0;
+
+        // Booking Page ID
+        $settings['book_page_id'] = isset($input['book_page_id']) ? intval($input['book_page_id']) : 0;
+
+        // Thank You Page ID
+        $settings['thankyou_page_id'] = isset($input['thankyou_page_id']) ? intval($input['thankyou_page_id']) : 0;
+
+        // Keep URL versions for backward compatibility (generated from IDs when needed)
+        $settings['policies_url'] = $settings['policies_page_id'] > 0 ? get_permalink($settings['policies_page_id']) : '';
+        $settings['booking_page_url'] = $settings['book_page_id'] > 0 ? get_permalink($settings['book_page_id']) : '';
+        $settings['thankyou_page_url'] = $settings['thankyou_page_id'] > 0 ? get_permalink($settings['thankyou_page_id']) : '';
+
+        // Hotel Logo ID for email templates
+        $settings['hotel_logo_id'] = isset($input['hotel_logo_id']) ? intval($input['hotel_logo_id']) : 0;
+
+
+        $settings['submit_btn_text'] = isset($input['submit_btn_text']) ? sanitize_text_field($input['submit_btn_text']) : '';
+
+        // Email template options
+        $settings['use_custom_staff_template'] = isset($input['use_custom_staff_template']) ? 1 : 0;
+        $settings['use_custom_guest_template'] = isset($input['use_custom_guest_template']) ? 1 : 0;
+
+        // Custom CSS
+        $settings['custom_css_booking_form'] = isset($input['custom_css_booking_form']) ? wp_strip_all_tags($input['custom_css_booking_form']) : '';
+        $settings['custom_css_floating_form'] = isset($input['custom_css_floating_form']) ? wp_strip_all_tags($input['custom_css_floating_form']) : '';
+
+
 
         update_option(HBS_Config::OPTION_KEY, $settings);
 
@@ -162,6 +239,266 @@ class HBS_Admin_Menu
         }
 
         wp_redirect(admin_url('admin.php?page=hbs_recent_bookings&deleted=true'));
+        exit;
+    }
+
+    public function bulk_delete_bookings()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Permisos insuficientes.', 'hotel-booking-system'));
+        }
+
+        check_admin_referer('hbs_bulk_delete', 'hbs_bulk_nonce');
+
+        $bulk_action = isset($_POST['bulk_action']) ? sanitize_text_field($_POST['bulk_action']) : '';
+        $booking_ids = isset($_POST['booking_ids']) ? array_map('intval', $_POST['booking_ids']) : array();
+
+        if ($bulk_action === 'delete' && !empty($booking_ids)) {
+            $deleted_count = 0;
+            foreach ($booking_ids as $booking_id) {
+                if ($booking_id > 0) {
+                    HBS_Booking::delete($booking_id);
+                    $deleted_count++;
+                }
+            }
+            wp_redirect(admin_url('admin.php?page=hbs_recent_bookings&bulk_deleted=' . $deleted_count));
+        } else {
+            wp_redirect(admin_url('admin.php?page=hbs_recent_bookings'));
+        }
+        exit;
+    }
+
+    public function save_room_type()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Permisos insuficientes.', 'hotel-booking-system'));
+        }
+
+        check_admin_referer('hbs_save_room_type', 'hbs_nonce');
+
+        $room_type = [
+            'slug' => sanitize_key($_POST['slug']),
+            'name' => sanitize_text_field($_POST['name']),
+
+            // Legacy fields (still sent from form for backwards compatibility)
+            'base_guests' => isset($_POST['base_guests']) ? max(1, intval($_POST['base_guests'])) : 2,
+            'max_capacity' => isset($_POST['max_capacity']) ? max(1, intval($_POST['max_capacity'])) : 4,
+
+            // Pricing
+            'base_price' => isset($_POST['base_price']) ? max(0, floatval($_POST['base_price'])) : 0,
+
+            // NEW: Occupancy parameters
+            'beds' => isset($_POST['beds']) ? max(1, intval($_POST['beds'])) : 2,
+            'base_occupancy' => isset($_POST['base_occupancy']) ? max(1, intval($_POST['base_occupancy'])) : 2,
+            'max_total' => isset($_POST['max_total']) ? max(1, intval($_POST['max_total'])) : 4,
+            'max_adults' => isset($_POST['max_adults']) ? max(1, intval($_POST['max_adults'])) : 3,
+            'max_kids' => isset($_POST['max_kids']) ? max(0, intval($_POST['max_kids'])) : 3,
+            'overflow_rule' => isset($_POST['overflow_rule']) && in_array($_POST['overflow_rule'], ['kids_only', 'any'])
+                ? sanitize_text_field($_POST['overflow_rule'])
+                : 'kids_only',
+
+            // Page link
+            'detail_page_url' => '',
+        ];
+
+        // Handle detail_page_url: support page ID dropdown OR direct URL with relative paths
+        if (isset($_POST['detail_page_id']) && intval($_POST['detail_page_id']) > 0) {
+            $room_type['detail_page_url'] = get_permalink(intval($_POST['detail_page_id']));
+        } elseif (isset($_POST['detail_page_url']) && !empty($_POST['detail_page_url'])) {
+            $url = trim($_POST['detail_page_url']);
+            if (strpos($url, '/') === 0) {
+                $room_type['detail_page_url'] = esc_url_raw(home_url($url));
+            } else {
+                $room_type['detail_page_url'] = esc_url_raw($url);
+            }
+        }
+
+        HBS_Room_Types::save($room_type);
+
+        wp_redirect(admin_url('admin.php?page=hbs_room_types&saved=true'));
+        exit;
+    }
+
+    public function delete_room_type()
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Permisos insuficientes.', 'hotel-booking-system'));
+        }
+
+        check_admin_referer('hbs_delete_room_type');
+
+        $slug = isset($_GET['slug']) ? sanitize_key($_GET['slug']) : '';
+
+        if ($slug && !HBS_Room_Types::delete($slug)) {
+            wp_redirect(admin_url('admin.php?page=hbs_room_types&error=cannot_delete_last'));
+            exit;
+        }
+
+        wp_redirect(admin_url('admin.php?page=hbs_room_types&deleted=true'));
+        exit;
+    }
+
+    /**
+     * Export all plugin settings and room types as JSON
+     */
+    public function export_settings()
+    {
+        // Security check
+        if (!current_user_can('manage_options')) {
+            wp_die(__('No tienes permisos para realizar esta acción.', 'hotel-booking-system'));
+        }
+
+        // Gather all configuration
+        $export_data = array(
+            'version' => '1.0',
+            'timestamp' => current_time('mysql'),
+            'settings' => get_option(HBS_Config::OPTION_KEY, array()),
+            'room_types' => HBS_Room_Types::get_all(),
+        );
+
+        // Generate filename with timestamp
+        $filename = 'hbs-config-' . date('Y-m-d-His') . '.json';
+
+        // Set headers for download
+        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+
+        // Output JSON
+        echo wp_json_encode($export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    /**
+     * Generate export JSON via AJAX (for clipboard copy)
+     */
+    public function generate_export_json()
+    {
+        // Security check
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('No tienes permisos para realizar esta acción.', 'hotel-booking-system'));
+        }
+
+        // Get current settings
+        $settings = get_option(HBS_Config::OPTION_KEY, array());
+
+        // Separate custom CSS from main settings for cleaner export
+        $custom_css_main = isset($settings['custom_css_booking_form']) ? $settings['custom_css_booking_form'] : '';
+        $custom_css_floating = isset($settings['custom_css_floating_form']) ? $settings['custom_css_floating_form'] : '';
+
+        // Gather all configuration
+        $export_data = array(
+            'version' => '1.0',
+            'timestamp' => current_time('mysql'),
+            'settings' => $settings,
+            'room_types' => HBS_Room_Types::get_all(),
+            'custom_css' => array(
+                'booking_form' => $custom_css_main,
+                'floating_form' => $custom_css_floating,
+            ),
+        );
+
+        // Send JSON response
+        wp_send_json_success(wp_json_encode($export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * Import settings and room types from pasted JSON text
+     */
+    public function import_settings()
+    {
+        // Security checks
+        if (!current_user_can('manage_options')) {
+            wp_die(__('No tienes permisos para realizar esta acción.', 'hotel-booking-system'));
+        }
+
+        check_admin_referer('hbs_import_settings', 'hbs_import_nonce');
+
+        // Get JSON from textarea field (pasted content)
+        $json_content = isset($_POST['hbs_import_json']) ? wp_unslash($_POST['hbs_import_json']) : '';
+
+        // Check if JSON was provided
+        if (empty(trim($json_content))) {
+            wp_redirect(admin_url('admin.php?page=hbs_import_export&import_error=empty_json'));
+            exit;
+        }
+
+        // Parse JSON
+        $import_data = json_decode($json_content, true);
+
+        // Validate JSON
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            wp_redirect(admin_url('admin.php?page=hbs_import_export&import_error=invalid_json'));
+            exit;
+        }
+
+        // Validate structure (must have at least settings or room_types)
+        if (!isset($import_data['settings']) && !isset($import_data['room_types'])) {
+            wp_redirect(admin_url('admin.php?page=hbs_import_export&import_error=invalid_structure'));
+            exit;
+        }
+
+        // Create automatic backup before importing
+        $backup_data = array(
+            'version' => '1.0',
+            'timestamp' => current_time('mysql'),
+            'settings' => get_option(HBS_Config::OPTION_KEY, array()),
+            'room_types' => HBS_Room_Types::get_all(),
+        );
+        update_option('hbs_config_backup_last', $backup_data);
+
+        // PARTIAL IMPORT: Merge settings (only update fields present in JSON)
+        if (isset($import_data['settings']) && is_array($import_data['settings'])) {
+            $current_settings = get_option(HBS_Config::OPTION_KEY, array());
+            foreach ($import_data['settings'] as $key => $value) {
+                $current_settings[$key] = $value;
+            }
+            update_option(HBS_Config::OPTION_KEY, $current_settings);
+        }
+
+        // PARTIAL IMPORT: Merge room types by slug
+        if (isset($import_data['room_types']) && is_array($import_data['room_types'])) {
+            $current_room_types = HBS_Room_Types::get_all();
+
+            foreach ($import_data['room_types'] as $slug => $room_data) {
+                if (isset($current_room_types[$slug])) {
+                    // Room type exists: merge fields
+                    foreach ($room_data as $field => $value) {
+                        $current_room_types[$slug][$field] = $value;
+                    }
+                } else {
+                    // Room type doesn't exist: create new
+                    $current_room_types[$slug] = $room_data;
+                    // Ensure slug is set
+                    $current_room_types[$slug]['slug'] = $slug;
+                }
+            }
+
+            update_option('hbs_room_types', $current_room_types);
+        }
+
+        // Handle custom CSS if present in separate section
+        if (isset($import_data['custom_css']) && is_array($import_data['custom_css'])) {
+            $current_settings = get_option(HBS_Config::OPTION_KEY, array());
+
+            if (isset($import_data['custom_css']['booking_form'])) {
+                $current_settings['custom_css_booking_form'] = wp_strip_all_tags($import_data['custom_css']['booking_form']);
+            }
+            if (isset($import_data['custom_css']['floating_form'])) {
+                $current_settings['custom_css_floating_form'] = wp_strip_all_tags($import_data['custom_css']['floating_form']);
+            }
+
+            update_option(HBS_Config::OPTION_KEY, $current_settings);
+        }
+
+        // Clear any caches
+        if (function_exists('wp_cache_flush')) {
+            wp_cache_flush();
+        }
+
+        wp_redirect(admin_url('admin.php?page=hbs_import_export&import_success=true'));
         exit;
     }
 }

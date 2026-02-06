@@ -43,9 +43,33 @@
 }
 
 .hbs-subtitle {
-  font-size: 0.95rem;
+  font-size: 1.5rem;
   color: #64748b;
   margin: 0;
+}
+
+.hbs-info-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 16px;
+}
+
+.hbs-info-note .hbs-info-icon {
+  flex-shrink: 0;
+  color: #0284c7;
+  margin-top: 2px;
+}
+
+.hbs-info-note p {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.5;
+  color: #0369a1;
 }
 
 .hbs-notices {
@@ -58,7 +82,7 @@
 .hbs-notice-badge {
   background: #f1f5f9;
   color: #475569;
-  font-size: 0.75rem;
+  font-size: 1.5rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 4px 10px;
@@ -67,7 +91,7 @@
 }
 
 .hbs-section-title {
-  font-size: 0.85rem;
+  font-size: 1.5rem;
   text-transform: uppercase;
   color: #94a3b8;
   font-weight: 700;
@@ -100,33 +124,8 @@
 
 .hbs-field label {
   margin-bottom: 6px;
-  font-size: 0.9rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: var(--hbs-text);
-}
-
-.hbs-sub-label {
-  font-size: 0.8em;
-  color: #94a3b8;
-  font-weight: normal;
-}
-
-/* Inputs with Icons */
-.hbs-input-icon {
-  position: relative;
-}
-
-.hbs-input-icon input {
-  padding-left: 38px !important;
-}
-
-.hbs-input-icon .dashicons {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-  pointer-events: none;
 }
 
 /* General Input Styles */
@@ -142,49 +141,58 @@
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 1.5rem;
   color: #1e293b;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
 
-.hbs-form input:focus,
-.hbs-form select:focus,
-.hbs-form textarea:focus {
-  border-color: var(--hbs-accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  outline: none;
+.hbs-form input[type="checkbox"],
+.hbs-form input[type="radio"] {
+  margin-right: 6px;
 }
 
-/* Room Cards */
+.hbs-form button[type="submit"] {
+  display: inline-block;
+  background: var(--hbs-accent);
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hbs-form button[type="submit"]:hover {
+  background: var(--hbs-primary-hover);
+}
+
+/* Room Type Selector (Horizontal Pills) */
 .hbs-room-selector {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 15px;
-  margin-bottom: 10px;
-}
-
-@media (max-width: 600px) {
-  .hbs-room-selector {
-    grid-template-columns: 1fr;
-  }
+  margin-bottom: 20px;
 }
 
 .hbs-room-card {
-  position: relative;
+  flex: 1;
   display: flex;
   align-items: center;
-  padding: 15px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  /* Pill shape */
+  padding: 12px 20px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #f8fafc;
+  position: relative;
+  text-align: center;
 }
 
 .hbs-room-card:hover {
-  border-color: #cbd5e1;
-  background: #fff;
+  border-color: var(--hbs-accent);
+  background: #f8fafc;
 }
 
 /* Hide actual radio */
@@ -196,67 +204,43 @@
 }
 
 /* Checked State */
-.hbs-room-radio:checked+.hbs-room-content+.hbs-check-mark {
-  background: var(--hbs-accent);
+.hbs-room-card:has(.hbs-room-radio:checked) {
   border-color: var(--hbs-accent);
-}
-
-.hbs-room-radio:checked+.hbs-room-content+.hbs-check-mark::after {
-  display: block;
+  background: #eff6ff;
+  /* Light Blue */
+  box-shadow: 0 0 0 1px var(--hbs-accent);
 }
 
 .hbs-room-radio:checked~.hbs-room-content .hbs-room-title {
   color: var(--hbs-accent);
 }
 
-.hbs-room-card:has(.hbs-room-radio:checked) {
-  border-color: var(--hbs-accent);
-  background: #eff6ff;
-}
-
 .hbs-room-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .hbs-room-title {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.5rem;
   color: #1e293b;
+  line-height: 1.2;
 }
 
 .hbs-room-desc {
-  font-size: 0.85rem;
+  font-size: 1.5rem;
   color: #64748b;
+  margin-top: 2px;
 }
 
-/* Custom Checkmark Circle */
+/* Hide the old checkmark circle for pill design */
 .hbs-check-mark {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #cbd5e1;
-  border-radius: 50%;
-  position: relative;
-  margin-left: 10px;
-  background: #fff;
-}
-
-.hbs-check-mark::after {
-  content: "";
-  position: absolute;
   display: none;
-  top: 50%;
-  left: 50%;
-  width: 10px;
-  height: 10px;
-  background: #fff;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
 }
 
 .hbs-hint {
-  font-size: 0.85rem;
+  font-size: 1.5rem;
   color: #d97706;
   /* Amber 600 */
   margin-bottom: 20px;
@@ -274,7 +258,7 @@
   display: flex;
   align-items: center;
   margin-bottom: 20px;
-  font-size: 0.9rem;
+  font-size: 1.5rem;
   color: var(--hbs-text);
   cursor: pointer;
 }
@@ -300,8 +284,8 @@
   width: 100%;
   padding: 14px 20px;
   background: var(--hbs-primary);
-  color: #ffffff;
-  font-size: 1.1rem;
+  color: #000000;
+  font-size: 1.5rem;
   font-weight: 700;
   border: none;
   border-radius: 8px;
@@ -332,7 +316,7 @@
 .hbs-breakdown {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 1.5rem;
 }
 
 .hbs-breakdown td,
@@ -367,7 +351,7 @@
   margin-top: 20px;
   padding: 15px;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 1.5rem;
   display: none;
   /* hidden by default */
 }
@@ -400,66 +384,280 @@
   #hbs-floating-form {
     display: block;
     position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: var(--hbs-float-bg);
-    border-top: 1px solid #e2e8f0;
-    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
-    z-index: 99999;
-    padding: 15px 0;
-    font-family: 'Inter', sans-serif;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    max-width: auto;
+    padding: 15px 25px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 50px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
   }
 
+  /* Center the form content */
   #hbs-floating-form form {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
-    align-items: flex-end;
+    flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
     gap: 15px;
-    padding: 0 20px;
   }
 
+  /* Label Styling in Floating Form */
   #hbs-floating-form label {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    color: var(--hbs-float-text);
-  }
-
-  #hbs-floating-form span {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--hbs-float-text);
-    opacity: 0.8;
-  }
-
-  #hbs-floating-form input {
-    padding: 8px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    background: #fff;
-    color: #0f172a;
-  }
-
-  #hbs-floating-form button {
-    padding: 9px 24px;
-    background: var(--hbs-float-btn);
-    color: #ffffff;
+    font-size: 1.5rem;
     font-weight: 600;
+    color: var(--hbs-text);
+  }
+
+  #hbs-floating-form label span {
+    margin-left: 2px;
+  }
+
+  /* Specific Widths for inputs in floating form */
+  #hbs-floating-form input[name="check_in_date"] {
+    width: auto;
+  }
+
+  #hbs-floating-form input[name="nights"],
+  #hbs-floating-form input[name="adults"],
+  #hbs-floating-form input[name="kids"] {
+    width: 50px;
+    text-align: center;
+  }
+
+  /* Button Styling in Floating Form */
+  #hbs-floating-form button {
+    background: var(--hbs-accent);
+    color: #fff;
     border: none;
-    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.2s;
-    font-size: 0.95rem;
-    margin-bottom: 1px;
-    /* visual alignment */
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1.5rem;
+    height: 42px;
+    /* Match input wrapper height approx */
+    margin-top: 18px;
+    /* Align with inputs */
+    transition: background 0.2s ease, transform 0.1s ease;
   }
 
   #hbs-floating-form button:hover {
-    background: var(--hbs-float-btn-hover);
+    background: var(--hbs-primary);
+    transform: translateY(-1px);
+  }
+
+  /* Make floating form inputs more compact */
+  #hbs-floating-form .hbs-input-wrapper input {
+    padding: 4px 0 !important;
+    font-size: 1.5rem;
+  }
+}
+
+/* GLOBAL SHARED STYLES FOR INPUT WRAPPERS (Main + Floating) */
+
+/* Input Wrapper (The "Box") */
+.hbs-input-wrapper,
+.hbs-phone-wrapper {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  /* Slate 100 */
+  border: 1px solid #cbd5e1;
+  /* Slate 300 */
+  border-radius: 6px;
+  padding: 0 8px;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hbs-input-wrapper:focus-within,
+.hbs-phone-wrapper:focus-within {
+  border-color: var(--hbs-accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Icon Style */
+.hbs-icon {
+  color: #64748b;
+  /* Slate 500 */
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+/* Reset inputs inside wrappers to look like they are part of the box */
+.hbs-input-wrapper input,
+.hbs-phone-wrapper input,
+.hbs-phone-wrapper select {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 8px 0 !important;
+  margin: 0 !important;
+  font-size: 1.5rem;
+  color: var(--hbs-text);
+  outline: none;
+  flex: 1;
+  /* Allow input to fill space */
+  width: auto;
+  /* Override 100% */
+  min-width: 0;
+  /* Fix flex overflow */
+}
+
+/* Specific adjustments for phone wrapper */
+.hbs-phone-wrapper select.hbs-country-select {
+  width: auto;
+  padding-right: 20px !important;
+  border-right: 1px solid #cbd5e1 !important;
+  border-radius: 0 !important;
+  margin-right: 8px !important;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+/* Hide native date icon (prevent duplicate) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+/* Hide number input arrows/spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  /* Firefox */
+}
+
+input[type="date"] {
+  position: relative;
+  font-family: inherit;
+}
+
+/* ==== Loading Overlay ==== */
+.hbs-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hbs-fadeIn 0.2s ease-in-out;
+}
+
+.hbs-loading-content {
+  background: var(--hbs-card-bg);
+  padding: 40px 60px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  animation: hbs-slideUp 0.3s ease-out;
+}
+
+.hbs-dots-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.hbs-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--hbs-accent);
+  animation: hbs-dotBounce 1.4s infinite ease-in-out both;
+}
+
+.hbs-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.hbs-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.hbs-loading-text {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--hbs-text);
+}
+
+/* Animations */
+@keyframes hbs-fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hbs-slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes hbs-dotBounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .hbs-loading-content {
+    padding: 30px 40px;
+  }
+
+  .hbs-loading-text {
+    font-size: 14px;
+  }
+
+  .hbs-dot {
+    width: 10px;
+    height: 10px;
   }
 }
