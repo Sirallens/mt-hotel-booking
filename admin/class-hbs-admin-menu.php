@@ -54,9 +54,6 @@ class HBS_Admin_Menu
         // Custom Admin CSS
         wp_enqueue_style('hbs-admin-settings', plugins_url('../assets/css/admin-settings.css', __FILE__), [], '1.0.0');
 
-        // Custom Admin CSS
-        wp_enqueue_style('hbs-admin-settings', plugins_url('../assets/css/admin-settings.css', __FILE__), [], '1.0.0');
-
         // Select2 for multiselect
         wp_enqueue_style('select2-css', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css');
         wp_enqueue_script('select2-js', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', array('jquery'), '4.1.0', true);
@@ -190,36 +187,6 @@ class HBS_Admin_Menu
         $settings['float_color_bg'] = sanitize_hex_color($input['float_color_bg']);
         $settings['float_color_text'] = sanitize_hex_color($input['float_color_text']);
         $settings['float_color_btn'] = sanitize_hex_color($input['float_color_btn']);
-
-        // Page IDs - Store IDs directly instead of URLs for better efficiency
-        // Policies Page ID
-        $settings['policies_page_id'] = isset($input['policies_page_id']) ? intval($input['policies_page_id']) : 0;
-
-        // Booking Page ID
-        $settings['book_page_id'] = isset($input['book_page_id']) ? intval($input['book_page_id']) : 0;
-
-        // Thank You Page ID
-        $settings['thankyou_page_id'] = isset($input['thankyou_page_id']) ? intval($input['thankyou_page_id']) : 0;
-
-        // Keep URL versions for backward compatibility (generated from IDs when needed)
-        $settings['policies_url'] = $settings['policies_page_id'] > 0 ? get_permalink($settings['policies_page_id']) : '';
-        $settings['booking_page_url'] = $settings['book_page_id'] > 0 ? get_permalink($settings['book_page_id']) : '';
-        $settings['thankyou_page_url'] = $settings['thankyou_page_id'] > 0 ? get_permalink($settings['thankyou_page_id']) : '';
-
-        // Hotel Logo ID for email templates
-        $settings['hotel_logo_id'] = isset($input['hotel_logo_id']) ? intval($input['hotel_logo_id']) : 0;
-
-
-        $settings['submit_btn_text'] = isset($input['submit_btn_text']) ? sanitize_text_field($input['submit_btn_text']) : '';
-
-        // Email template options
-        $settings['use_custom_staff_template'] = isset($input['use_custom_staff_template']) ? 1 : 0;
-        $settings['use_custom_guest_template'] = isset($input['use_custom_guest_template']) ? 1 : 0;
-
-        // Custom CSS
-        $settings['custom_css_booking_form'] = isset($input['custom_css_booking_form']) ? wp_strip_all_tags($input['custom_css_booking_form']) : '';
-        $settings['custom_css_floating_form'] = isset($input['custom_css_floating_form']) ? wp_strip_all_tags($input['custom_css_floating_form']) : '';
-
 
         // Page IDs - Store IDs directly instead of URLs for better efficiency
         // Policies Page ID
