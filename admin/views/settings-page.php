@@ -700,72 +700,7 @@ if ($thankyou_page_id === 0 && !empty($opts['thankyou_page_url'])) {
             </div>
         </div>
 
-        <!-- Import/Export Configuration Section -->
-        <div class="hbs-card">
-            <div class="hbs-card-header">
-                <h2><?php esc_html_e('Importar / Exportar Configuración', 'hotel-booking-system'); ?></h2>
-            </div>
-            <div class="hbs-card-body">
-                <p style="margin-bottom: 20px; color: #64748b;">
-                    <?php esc_html_e('Exporta la configuración completa del plugin (ajustes generales + tipos de habitación) o importa una configuración previamente exportada.', 'hotel-booking-system'); ?>
-                </p>
-
-                <div class="hbs-grid hbs-grid-2" style="gap: 20px;">
-                    <!-- Export -->
-                    <div style="background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 8px;">
-                        <h3 style="margin-top: 0; font-size: 16px; color: #1e293b;">
-                            📤 <?php esc_html_e('Exportar Configuración', 'hotel-booking-system'); ?>
-                        </h3>
-                        <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">
-                            <?php esc_html_e('Descarga un archivo JSON con toda la configuración actual.', 'hotel-booking-system'); ?>
-                        </p>
-                        <a href="<?php echo esc_url(admin_url('admin-post.php?action=hbs_export_settings')); ?>" 
-                           class="hbs-button-secondary" 
-                           style="text-decoration: none; display: inline-block;">
-                            📥 <?php esc_html_e('Descargar Configuración', 'hotel-booking-system'); ?>
-                        </a>
-                    </div>
-
-                    <!-- Import -->
-                    <div style="background: #fef3c7; border: 2px dashed #fbbf24; padding: 20px; border-radius: 8px;">
-                        <h3 style="margin-top: 0; font-size: 16px; color: #92400e;">
-                            📥 <?php esc_html_e('Importar Configuración', 'hotel-booking-system'); ?>
-                        </h3>
-                        <p style="font-size: 14px; color: #92400e; margin-bottom: 15px;">
-                            <?php esc_html_e('Carga un archivo JSON para restaurar una configuración. ⚠️ Esto sobrescribirá la configuración actual.', 'hotel-booking-system'); ?>
-                        </p>
-                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" id="hbs-import-form">
-                            <input type="hidden" name="action" value="hbs_import_settings">
-                            <?php wp_nonce_field('hbs_import_settings', 'hbs_import_nonce'); ?>
-                            
-                            <input type="file" 
-                                   name="hbs_import_file" 
-                                   id="hbs-import-file" 
-                                   accept=".json,application/json" 
-                                   required 
-                                   style="margin-bottom: 12px; display: block; width: 100%;">
-                            
-                            <button type="submit" 
-                                    class="hbs-button-secondary" 
-                                    onclick="return confirm('<?php echo esc_js(__('¿Estás seguro? Esto sobrescribirá toda la configuración actual.', 'hotel-booking-system')); ?>');">
-                                📤 <?php esc_html_e('Importar Ahora', 'hotel-booking-system'); ?>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Warning Note -->
-                <div style="background: #fef2f2; border: 1px solid #fca5a5; padding: 15px; border-radius: 6px; margin-top: 20px;">
-                    <p style="margin: 0; color: #991b1b; font-size: 13px;">
-                        <strong>⚠️ Importante:</strong>
-                        <?php esc_html_e('Se recomienda exportar y guardar una copia de la configuración actual antes de importar. La importación es irreversible una vez aplicada.', 'hotel-booking-system'); ?>
-                    </p>
-                </div>
-            </div>
-        </div>
-
         <div class="hbs-actions">
-
             <button type="submit"
                 class="hbs-button-primary"><?php esc_html_e('Guardar Cambios', 'hotel-booking-system'); ?></button>
         </div>
