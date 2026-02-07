@@ -37,73 +37,12 @@ if ($thankyou_page_id === 0 && !empty($opts['thankyou_page_url'])) {
 }
 ?>
 
-<div class="hbs-wrap">
-    <div class="hbs-header">
-        <h1 class="hbs-title"><?php echo esc_html__('Ajustes Hotel', 'hotel-booking-system'); ?></h1>
-    </div>
-
+<div class="wrap">
+    <h1><?php echo esc_html__('Hotel Booking — Ajustes', 'hotel-booking-system'); ?></h1>
 
     <?php if (isset($_GET['hbs_saved'])): ?>
-        <div class="hbs-notice hbs-notice-success">
-            <?php echo esc_html__('Ajustes guardados correctamente.', 'hotel-booking-system'); ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['import_success'])): ?>
-        <div class="hbs-notice hbs-notice-success">
-            <?php echo esc_html__('✅ Configuración importada exitosamente.', 'hotel-booking-system'); ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['import_error'])): ?>
-        <div class="hbs-notice hbs-notice-error">
-            <?php
-            $error = sanitize_text_field($_GET['import_error']);
-            switch ($error) {
-                case 'no_file_selected':
-                    echo esc_html__('❌ Error: No se seleccionó ningún archivo.', 'hotel-booking-system');
-                    break;
-                case 'file_too_large_ini':
-                    $max_size = ini_get('upload_max_filesize');
-                    echo sprintf(
-                        esc_html__('❌ Error: El archivo excede el límite de tamaño (%s). Contacta al administrador del servidor.', 'hotel-booking-system'),
-                        $max_size
-                    );
-                    break;
-                case 'file_too_large_form':
-                    echo esc_html__('❌ Error: El archivo es demasiado grande.', 'hotel-booking-system');
-                    break;
-                case 'upload_partial':
-                    echo esc_html__('❌ Error: El archivo solo se subió parcialmente. Intenta de nuevo.', 'hotel-booking-system');
-                    break;
-                case 'no_tmp_dir':
-                    echo esc_html__('❌ Error: Falta la carpeta temporal en el servidor. Contacta al administrador.', 'hotel-booking-system');
-                    break;
-                case 'cant_write':
-                    echo esc_html__('❌ Error: No se pudo escribir el archivo en el disco. Verifica permisos.', 'hotel-booking-system');
-                    break;
-                case 'php_extension_blocked':
-                    echo esc_html__('❌ Error: Una extensión de PHP bloqueó la subida.', 'hotel-booking-system');
-                    break;
-                case 'invalid_json':
-                    echo esc_html__('❌ Error: El archivo no es un JSON válido.', 'hotel-booking-system');
-                    break;
-                case 'invalid_structure':
-                    echo esc_html__('❌ Error: El archivo no tiene la estructura correcta.', 'hotel-booking-system');
-                    break;
-                default:
-                    if (strpos($error, 'upload_error_') === 0) {
-                        $error_code = str_replace('upload_error_', '', $error);
-                        echo sprintf(
-                            esc_html__('❌ Error de subida (código: %s). Contacta al soporte.', 'hotel-booking-system'),
-                            $error_code
-                        );
-                    } else {
-                        echo esc_html__('❌ Error desconocido al importar.', 'hotel-booking-system');
-                    }
-                    break;
-            }
-            ?>
+        <div class="notice notice-success is-dismissible">
+            <p><?php echo esc_html__('Ajustes guardados correctamente.', 'hotel-booking-system'); ?></p>
         </div>
     <?php endif; ?>
 
@@ -649,126 +588,11 @@ if ($thankyou_page_id === 0 && !empty($opts['thankyou_page_url'])) {
                         </strong>
                         <?php esc_html_e('Muestra los detalles de confirmación de una reserva después de que el usuario haya enviado el formulario.', 'hotel-booking-system'); ?>
                     </p>
+                </td>
+            </tr>
+        </table>
 
-                    <p style="color: #64748b; margin: 5px 0;">
-                        <strong>
-                            <?php esc_html_e('Uso:', 'hotel-booking-system'); ?>
-                        </strong>
-                        <?php esc_html_e('Crea una página (ej. "Gracias por tu Reserva") y pega este shortcode. Luego configura la URL de esta página en el campo "URL Página de Gracias" arriba.', 'hotel-booking-system'); ?>
-                    </p>
-
-                    <p style="color: #64748b; margin: 5px 0;">
-                        <strong>
-                            <?php esc_html_e('Información mostrada:', 'hotel-booking-system'); ?>
-                        </strong>
-                    </p>
-                    <ul style="color: #64748b; margin: 5px 0; padding-left: 20px;">
-                        <li>
-                            <?php esc_html_e('Número de reservación', 'hotel-booking-system'); ?>
-                        </li>
-                        <li>
-                            <?php esc_html_e('Fechas de check-in y check-out', 'hotel-booking-system'); ?>
-                        </li>
-                        <li>
-                            <?php esc_html_e('Tipo de habitación seleccionada', 'hotel-booking-system'); ?>
-                        </li>
-                        <li>
-                            <?php esc_html_e('Número de huéspedes', 'hotel-booking-system'); ?>
-                        </li>
-                        <li>
-                            <?php esc_html_e('Precio total estimado', 'hotel-booking-system'); ?>
-                        </li>
-                    </ul>
-
-                    <div
-                        style="background: #fef3c7; border: 1px solid #fbbf24; padding: 12px; border-radius: 6px; margin-top: 15px;">
-                        <p style="margin: 0; color: #92400e; font-size: 13px;">
-                            <strong>💡 Nota:</strong>
-                            <?php esc_html_e('Este shortcode requiere el parámetro ?booking_id=X en la URL. El sistema redirige automáticamente a esta página después de una reserva exitosa.', 'hotel-booking-system'); ?>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Quick Copy Tip -->
-                <div
-                    style="background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 6px; margin-top: 20px;">
-                    <p style="margin: 0; color: #1e40af; font-size: 14px;">
-                        <strong>💡 Tip:</strong>
-                        <?php esc_html_e('Haz clic en los códigos para seleccionarlos fácilmente y copiarlos.', 'hotel-booking-system'); ?>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Import/Export Configuration Section -->
-        <div class="hbs-card">
-            <div class="hbs-card-header">
-                <h2><?php esc_html_e('Importar / Exportar Configuración', 'hotel-booking-system'); ?></h2>
-            </div>
-            <div class="hbs-card-body">
-                <p style="margin-bottom: 20px; color: #64748b;">
-                    <?php esc_html_e('Exporta la configuración completa del plugin (ajustes generales + tipos de habitación) o importa una configuración previamente exportada.', 'hotel-booking-system'); ?>
-                </p>
-
-                <div class="hbs-grid hbs-grid-2" style="gap: 20px;">
-                    <!-- Export -->
-                    <div style="background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 8px;">
-                        <h3 style="margin-top: 0; font-size: 16px; color: #1e293b;">
-                            📤 <?php esc_html_e('Exportar Configuración', 'hotel-booking-system'); ?>
-                        </h3>
-                        <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">
-                            <?php esc_html_e('Descarga un archivo JSON con toda la configuración actual.', 'hotel-booking-system'); ?>
-                        </p>
-                        <a href="<?php echo esc_url(admin_url('admin-post.php?action=hbs_export_settings')); ?>" 
-                           class="hbs-button-secondary" 
-                           style="text-decoration: none; display: inline-block;">
-                            📥 <?php esc_html_e('Descargar Configuración', 'hotel-booking-system'); ?>
-                        </a>
-                    </div>
-
-                    <!-- Import -->
-                    <div style="background: #fef3c7; border: 2px dashed #fbbf24; padding: 20px; border-radius: 8px;">
-                        <h3 style="margin-top: 0; font-size: 16px; color: #92400e;">
-                            📥 <?php esc_html_e('Importar Configuración', 'hotel-booking-system'); ?>
-                        </h3>
-                        <p style="font-size: 14px; color: #92400e; margin-bottom: 15px;">
-                            <?php esc_html_e('Carga un archivo JSON para restaurar una configuración. ⚠️ Esto sobrescribirá la configuración actual.', 'hotel-booking-system'); ?>
-                        </p>
-                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data" id="hbs-import-form">
-                            <input type="hidden" name="action" value="hbs_import_settings">
-                            <?php wp_nonce_field('hbs_import_settings', 'hbs_import_nonce'); ?>
-                            
-                            <input type="file" 
-                                   name="hbs_import_file" 
-                                   id="hbs-import-file" 
-                                   accept=".json,application/json" 
-                                   required 
-                                   style="margin-bottom: 12px; display: block; width: 100%;">
-                            
-                            <button type="submit" 
-                                    class="hbs-button-secondary" 
-                                    onclick="return confirm('<?php echo esc_js(__('¿Estás seguro? Esto sobrescribirá toda la configuración actual.', 'hotel-booking-system')); ?>');">
-                                📤 <?php esc_html_e('Importar Ahora', 'hotel-booking-system'); ?>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Warning Note -->
-                <div style="background: #fef2f2; border: 1px solid #fca5a5; padding: 15px; border-radius: 6px; margin-top: 20px;">
-                    <p style="margin: 0; color: #991b1b; font-size: 13px;">
-                        <strong>⚠️ Importante:</strong>
-                        <?php esc_html_e('Se recomienda exportar y guardar una copia de la configuración actual antes de importar. La importación es irreversible una vez aplicada.', 'hotel-booking-system'); ?>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="hbs-actions">
-
-            <button type="submit"
-                class="hbs-button-primary"><?php esc_html_e('Guardar Cambios', 'hotel-booking-system'); ?></button>
-        </div>
+        <?php submit_button(); ?>
     </form>
 
     <script>

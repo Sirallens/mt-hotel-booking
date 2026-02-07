@@ -82,9 +82,36 @@ class HBS_Public
             true
         );
 
+        // Enqueue Flatpickr library for datepicker
+        wp_enqueue_style(
+            'flatpickr',
+            'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css',
+            array(),
+            '4.6.13'
+        );
+
+        wp_enqueue_script(
+            'flatpickr',
+            'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js',
+            array(),
+            '4.6.13',
+            true
+        );
+
+        // Flatpickr Spanish locale (optional)
+        wp_enqueue_script(
+            'flatpickr-es',
+            'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js',
+            array('flatpickr'),
+            '4.6.13',
+            true
+        );
+
         wp_enqueue_style(
             'hbs-public',
             plugins_url('../assets/css/hotel-booking.css', __FILE__),
+            array('flatpickr'), // Depend on Flatpickr CSS
+            '0.1.4' // Info note styling
             array('flatpickr'), // Depend on Flatpickr CSS
             '0.1.4' // Info note styling
         );
@@ -92,6 +119,8 @@ class HBS_Public
         wp_enqueue_script(
             'hbs-public',
             plugins_url('../assets/js/hotel-booking.js', __FILE__),
+            array('jquery', 'flatpickr', 'flatpickr-es'), // Depend on Flatpickr and Spanish locale
+            '0.1.5', // Flatpickr init now runs on ALL pages
             array('jquery', 'flatpickr', 'flatpickr-es'), // Depend on Flatpickr and Spanish locale
             '0.1.5', // Flatpickr init now runs on ALL pages
             true
@@ -147,6 +176,15 @@ class HBS_Public
             wp_add_inline_style('hbs-public', $combined_css);
         }
 
+        // --- Custom CSS from Settings ---
+        $custom_css_booking = !empty($options['custom_css_booking_form']) ? $options['custom_css_booking_form'] : '';
+        $custom_css_floating = !empty($options['custom_css_floating_form']) ? $options['custom_css_floating_form'] : '';
+
+        if (!empty($custom_css_booking) || !empty($custom_css_floating)) {
+            $combined_css = $custom_css_booking . "\n" . $custom_css_floating;
+            wp_add_inline_style('hbs-public', $combined_css);
+        }
+
         // Extract prices (cast to float for safety).
         $prices = array(
             'price_single' => isset($options['price_single']) ? (float) $options['price_single'] : 1850.00,
@@ -174,6 +212,31 @@ class HBS_Public
             );
         }
 
+<<<<<<< HEAD
+        // Get room types for JavaScript (includes occupancy parameters)
+        $room_types = HBS_Room_Types::get_all();
+
+        // Prepare room types data for frontend validation
+        $room_types_for_js = array();
+        foreach ($room_types as $slug => $room_data) {
+            $room_types_for_js[$slug] = array(
+                'name' => $room_data['name'],
+                'base_price' => isset($room_data['base_price']) ? (float) $room_data['base_price'] : 0,
+                // Occupancy parameters for frontend validation
+                'beds' => isset($room_data['beds']) ? (int) $room_data['beds'] : 2,
+                'base_occupancy' => isset($room_data['base_occupancy']) ? (int) $room_data['base_occupancy'] : 2,
+                'max_total' => isset($room_data['max_total']) ? (int) $room_data['max_total'] : 4,
+                'max_adults' => isset($room_data['max_adults']) ? (int) $room_data['max_adults'] : 3,
+                'max_kids' => isset($room_data['max_kids']) ? (int) $room_data['max_kids'] : 3,
+                'overflow_rule' => isset($room_data['overflow_rule']) ? $room_data['overflow_rule'] : 'kids_only',
+            );
+        }
+
+=======
+        // Get room types for JavaScript
+        $room_types = HBS_Room_Types::get_all();
+
+>>>>>>> 79cef2eb72c241cee5b44b906bd29afe434539b2
         wp_localize_script(
             'hbs-public',
             'HBS_VARS',
@@ -189,6 +252,7 @@ class HBS_Public
     }
 
     /**
+     * Register the booking form shortcodes.
      * Register the booking form shortcodes.
      */
     public function register_shortcode()
@@ -424,12 +488,224 @@ class HBS_Public
     }
 
     /**
+     * Shortcode callback: displays booking confirmation.
+     *
+     * @return string
+     */
+    public function shortcode_booking_confirmation()
+    {
+        // Get booking ID from URL
+        $booking_id = isset($_GET['booking_id']) ? intval($_GET['booking_id']) : 0;
+
+        if (empty($booking_id)) {
+            return '<div class="hbs-confirmation hbs-error"><p>' . esc_html__('No se encontró el ID de reservación.', 'hotel-booking-system') . '</p></div>';
+        }
+
+        // Fetch booking details
+        $booking = HBS_Booking::get($booking_id);
+
+        if (!$booking) {
+            return '<div class="hbs-confirmation hbs-error"><p>' . esc_html__('Reservación no encontrada.', 'hotel-booking-system') . '</p></div>';
+        }
+
+        // Format room type - get from database
+        $room = HBS_Room_Types::get($booking['room_type']);
+        $room_type_label = $room ? $room['name'] : $booking['room_type'];
+
+        // Build output
+        ob_start();
+        ?>
+        <div class="hbs-confirmation hbs-success">
+            <div class="hbs-confirmation-header">
+                <h2><?php esc_html_e('¡Solicitud Recibida!', 'hotel-booking-system'); ?></h2>
+                <p class="hbs-confirmation-subtitle">
+                    <?php printf(esc_html__('Gracias %s, hemos recibido su solicitud.', 'hotel-booking-system'), '<strong>' . esc_html($booking['guest_name']) . '</strong>'); ?>
+                </p>
+            </div>
+
+            <div class="hbs-confirmation-details">
+                <table class="hbs-confirmation-table">
+                    <tr>
+                        <th><?php esc_html_e('Check-in', 'hotel-booking-system'); ?></th>
+                        <td><?php echo esc_html($booking['check_in_date']); ?></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Check-out', 'hotel-booking-system'); ?></th>
+                        <td><?php echo esc_html($booking['check_out_date']); ?></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Tipo de Habitación', 'hotel-booking-system'); ?></th>
+                        <td><?php echo esc_html($room_type_label); ?></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Huéspedes', 'hotel-booking-system'); ?></th>
+                        <td><?php printf(esc_html__('%d Adultos, %d Niños', 'hotel-booking-system'), $booking['adults_count'], $booking['kids_count']); ?>
+                        </td>
+                    </tr>
+                    <?php
+                    $opts_confirmation = get_option(HBS_Config::OPTION_KEY, []);
+                    if (!empty($opts_confirmation['show_price_breakdown'])):
+                        ?>
+                        <tr class="hbs-total-row">
+                            <th><?php esc_html_e('Total Est', 'hotel-booking-system'); ?></th>
+                            <td><strong>$<?php echo esc_html(number_format($booking['total_price'], 2)); ?> MXN</strong></td>
+                        </tr>
+                    <?php endif; ?>
+                </table>
+            </div>
+
+            <div class="hbs-confirmation-footer">
+                <p><?php esc_html_e('Nos pondremos en contacto con usted pronto para confirmar la disponibilidad y los siguientes pasos.', 'hotel-booking-system'); ?>
+                </p>
+                <p><?php printf(esc_html__('Si tiene preguntas, contáctenos a %s', 'hotel-booking-system'), '<a href="mailto:contacto@altavistahotel.com.mx">contacto@altavistahotel.com.mx</a>'); ?>
+                </p>
+            </div>
+        </div>
+
+        <style>
+            .hbs-confirmation {
+                max-width: 600px;
+                margin: 40px auto;
+                padding: 40px;
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                border: 1px solid #e2e8f0;
+            }
+
+            .hbs-confirmation.hbs-error {
+                border-color: #fecaca;
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            .hbs-confirmation-header {
+                text-align: center;
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+                border-bottom: 2px solid #3b82f6;
+            }
+
+            .hbs-confirmation-header h2 {
+                color: #0f172a;
+                font-size: 2rem;
+                margin: 0 0 10px;
+            }
+
+            .hbs-confirmation-subtitle {
+                color: #64748b;
+                font-size: 1.1rem;
+                margin: 0;
+            }
+
+            .hbs-confirmation-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }
+
+            .hbs-confirmation-table th,
+            .hbs-confirmation-table td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .hbs-confirmation-table th {
+                color: #64748b;
+                font-weight: 600;
+                width: 40%;
+            }
+
+            .hbs-confirmation-table td {
+                color: #0f172a;
+                font-weight: 500;
+            }
+
+            .hbs-confirmation-table tr.hbs-total-row th,
+            .hbs-confirmation-table tr.hbs-total-row td {
+                font-size: 1.2rem;
+                padding-top: 20px;
+                border-bottom: none;
+                color: #0f172a;
+            }
+
+            .hbs-confirmation-footer {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #e2e8f0;
+                text-align: center;
+                color: #64748b;
+            }
+
+            .hbs-confirmation-footer p {
+                margin: 10px 0;
+            }
+
+            .hbs-confirmation-footer a {
+                color: #3b82f6;
+                text-decoration: none;
+            }
+        </style>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Check if a page builder is currently active/editing.
+     * 
+     * @return bool True if in page builder edit mode.
+     */
+    private function is_page_builder_active()
+    {
+        // Elementor
+        if (isset($_GET['elementor-preview']) || did_action('elementor/preview/init')) {
+            return true;
+        }
+
+        // Divi Builder
+        if (function_exists('et_core_is_fb_enabled') && et_core_is_fb_enabled()) {
+            return true;
+        }
+        if (isset($_GET['et_fb'])) {
+            return true;
+        }
+
+        // Beaver Builder
+        if (isset($_GET['fl_builder'])) {
+            return true;
+        }
+
+        // Bricks Builder
+        if (isset($_GET['bricks']) && $_GET['bricks'] === 'run') {
+            return true;
+        }
+
+        // Oxygen Builder
+        if (isset($_GET['ct_builder']) || defined('SHOW_CT_BUILDER')) {
+            return true;
+        }
+
+        // Brizy Builder
+        if (isset($_GET['brizy-edit']) || isset($_GET['brizy-edit-iframe'])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Render floating mini–form in footer (desktop only).
      * Outputs only if 'floating_enabled' setting is truthy AND not in admin.
      */
     public function render_floating_form()
     {
         if (is_admin()) {
+            return;
+        }
+
+        // Don't show in page builders
+        if ($this->is_page_builder_active()) {
             return;
         }
 
@@ -489,6 +765,21 @@ class HBS_Public
                             min="<?php echo esc_attr($today); ?>"
                             placeholder="<?php echo esc_attr__('Seleccionar fecha', 'hotel-booking-system'); ?>" readonly>
                     </div>
+                <!-- Check-in -->
+                <label>
+                    <span><?php echo esc_html__('Check-In', 'hotel-booking-system'); ?></span>
+                    <div class="hbs-input-wrapper">
+                        <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <input type="text" name="check_in_date" class="js-flatpickr" value="<?php echo esc_attr($today); ?>"
+                            min="<?php echo esc_attr($today); ?>"
+                            placeholder="<?php echo esc_attr__('Seleccionar fecha', 'hotel-booking-system'); ?>" readonly>
+                    </div>
                 </label>
 
                 <!-- Nights (Moon Icon) -->
@@ -501,8 +792,29 @@ class HBS_Public
                         </svg>
                         <input type="number" name="nights" value="1" min="1" style="width:70px;">
                     </div>
+                <!-- Nights (Moon Icon) -->
+                <label>
+                    <span><?php echo esc_html__('Noches', 'hotel-booking-system'); ?></span>
+                    <div class="hbs-input-wrapper">
+                        <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        <input type="number" name="nights" value="1" min="1" style="width:70px;">
+                    </div>
                 </label>
 
+                <!-- Adults -->
+                <label>
+                    <span><?php echo esc_html__('Adultos', 'hotel-booking-system'); ?></span>
+                    <div class="hbs-input-wrapper">
+                        <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <input type="number" name="adults" value="1" min="1" style="width:70px;">
+                    </div>
                 <!-- Adults -->
                 <label>
                     <span><?php echo esc_html__('Adultos', 'hotel-booking-system'); ?></span>
@@ -527,9 +839,21 @@ class HBS_Public
                         </svg>
                         <input type="number" name="kids" value="0" min="0" style="width:70px;">
                     </div>
+                <!-- Kids -->
+                <label>
+                    <span><?php echo esc_html__('Niños', 'hotel-booking-system'); ?></span>
+                    <div class="hbs-input-wrapper">
+                        <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15.5 20.5a3.5 3.5 0 1 0-7 0V15a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v5.5Z" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <input type="number" name="kids" value="0" min="0" style="width:70px;">
+                    </div>
                 </label>
 
                 <button type="submit">
+                    <?php echo esc_html(!empty($options['submit_btn_text']) ? $options['submit_btn_text'] : __('Reservar', 'hotel-booking-system')); ?>
                     <?php echo esc_html(!empty($options['submit_btn_text']) ? $options['submit_btn_text'] : __('Reservar', 'hotel-booking-system')); ?>
                 </button>
             </form>
@@ -553,9 +877,18 @@ class HBS_Public
             ob_clean();
         }
 
+        // Clean any buffered output (warnings/notices) to ensure clean JSON response
+        // This works in tandem with ob_start() in the main plugin file
+        if (ob_get_length()) {
+            ob_clean();
+        }
+
         // Nonce.
         check_ajax_referer(HBS_Config::NONCE_ACTION, HBS_Config::NONCE_KEY);
 
+        // Honeypot (múltiples campos anti-spam).
+        // Si cualquier campo honeypot tiene valor, es spam
+        if (!empty($_POST['hbs_hp_field']) || !empty($_POST['website_url']) || !empty($_POST['company_name'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
         // Honeypot (múltiples campos anti-spam).
         // Si cualquier campo honeypot tiene valor, es spam
         if (!empty($_POST['hbs_hp_field']) || !empty($_POST['website_url']) || !empty($_POST['company_name'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing

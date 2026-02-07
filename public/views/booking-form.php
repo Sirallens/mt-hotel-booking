@@ -49,11 +49,31 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
             placeholder="Nombre de empresa">
     </div>
 
+    <!-- Honeypot anti-spam (múltiples trampas) -->
+    <div style="position: absolute; left: -9999px; top: -9999px;" aria-hidden="true">
+        <input type="text" name="hbs_hp_field" value="" tabindex="-1" autocomplete="off">
+        <input type="email" name="website_url" value="" tabindex="-1" autocomplete="off" placeholder="Tu sitio web">
+        <input type="text" name="company_name" value="" tabindex="-1" autocomplete="off"
+            placeholder="Nombre de empresa">
+    </div>
+
     <div class="hbs-header">
+        <h3><?php echo esc_html__('Solicitud de Cotización', 'hotel-booking-system'); ?></h3>
         <h3><?php echo esc_html__('Solicitud de Cotización', 'hotel-booking-system'); ?></h3>
         <p class="hbs-subtitle">
             <?php echo esc_html__('Complete sus datos para recibir una cotización oficial.', 'hotel-booking-system'); ?>
         </p>
+        <div class="hbs-info-note">
+            <svg class="hbs-info-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <p>
+                <?php echo esc_html__('Este formulario es para solicitar cotización de reservación. Un miembro de nuestro equipo le atenderá a través de la información de contacto que proporcione. Se recomienda enviar su solicitud con al menos 2 días de anticipación.', 'hotel-booking-system'); ?>
+            </p>
+        </div>
         <div class="hbs-info-note">
             <svg class="hbs-info-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -79,6 +99,7 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
         <div class="hbs-field">
             <label for="hbs-checkin"><?php echo esc_html__('Fecha de llegada', 'hotel-booking-system'); ?></label>
             <div class="hbs-input-wrapper">
+            <div class="hbs-input-wrapper">
                 <input id="hbs-checkin" type="date" class="js-flatpickr" name="check_in_date"
                     value="<?php echo esc_attr($check_in_date); ?>" min="<?php echo esc_attr($today); ?>" required>
             </div>
@@ -87,8 +108,13 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
         <div class="hbs-field">
             <label for="hbs-nights"><?php echo esc_html__('Noches', 'hotel-booking-system'); ?></label>
             <div class="hbs-input-wrapper">
+            <div class="hbs-input-wrapper">
                 <input id="hbs-nights" type="number" name="nights" min="1" value="<?php echo esc_attr($nights); ?>"
                     required>
+                <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
                 <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
@@ -109,13 +135,32 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
                     <circle cx="12" cy="7" r="4"></circle>
                 </svg>
             </div>
+            <div class="hbs-input-wrapper">
+                <input id="hbs-adults" type="number" name="adults_count" min="1"
+                    value="<?php echo esc_attr($adults_prefill); ?>" required>
+                <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
         </div>
 
         <div class="hbs-field">
             <label for="hbs-kids">
                 <?php echo esc_html__('Niños', 'hotel-booking-system'); ?>
                 <span class="hbs-sub-label">(4 - 11 años)</span>
+                <span class="hbs-sub-label">(4 - 11 años)</span>
             </label>
+            <div class="hbs-input-wrapper">
+                <input id="hbs-kids" type="number" name="kids_count" min="0"
+                    value="<?php echo esc_attr($kids_prefill); ?>" required>
+                <svg class="hbs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15.5 20.5a3.5 3.5 0 1 0-7 0V15a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v5.5Z" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+            </div>
             <div class="hbs-input-wrapper">
                 <input id="hbs-kids" type="number" name="kids_count" min="0"
                     value="<?php echo esc_attr($kids_prefill); ?>" required>
@@ -199,6 +244,26 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
                 <input id="hbs-phone" type="tel" name="guest_phone" required placeholder="000 000 0000" maxlength="10"
                     oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
             </div>
+            <div class="hbs-phone-wrapper">
+                <select id="hbs-country-code" name="guest_country_code" class="hbs-country-select">
+                    <option value="+52" selected>MX (+52)</option>
+                    <option value="+1">US (+1)</option>
+                    <option value="+1">CA (+1)</option>
+                    <option value="+34">ES (+34)</option>
+                    <option value="+54">AR (+54)</option>
+                    <option value="+57">CO (+57)</option>
+                    <option value="+56">CL (+56)</option>
+                    <option value="+51">PE (+51)</option>
+                    <option value="+506">CR (+506)</option>
+                    <option value="+44">UK (+44)</option>
+                    <option value="+33">FR (+33)</option>
+                    <option value="+49">DE (+49)</option>
+                    <option value="+39">IT (+39)</option>
+                    <option value="+55">BR (+55)</option>
+                </select>
+                <input id="hbs-phone" type="tel" name="guest_phone" required placeholder="000 000 0000" maxlength="10"
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
+            </div>
         </div>
     </div>
 
@@ -225,11 +290,24 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
         <?php if (!empty($opts['show_price_breakdown'])): ?>
             <!-- Desglose de precio -->
             <div id="hbs-price-breakdown" class="hbs-price-box"></div>
+        <label class="hbs-checkbox-wrapper">
+            <input type="checkbox" name="accept_quote_terms" required>
+            <span class="hbs-checkbox-text">
+                <?php echo esc_html__('Entiendo que esta es una solicitud de cotización sujeto a disponibilidad y que se me recomienda reservar con al menos 2 días de anticipación.', 'hotel-booking-system'); ?>
+            </span>
+        </label>
 
+        <?php if (!empty($opts['show_price_breakdown'])): ?>
+            <!-- Desglose de precio -->
+            <div id="hbs-price-breakdown" class="hbs-price-box"></div>
+
+            <input type="hidden" name="total_price" value="0">
+        <?php endif; ?>
             <input type="hidden" name="total_price" value="0">
         <?php endif; ?>
 
         <button type="submit" class="hbs-btn-primary">
+            <?php echo esc_html(!empty($opts['submit_btn_text']) ? $opts['submit_btn_text'] : __('Confirmar Reserva', 'hotel-booking-system')); ?>
             <?php echo esc_html(!empty($opts['submit_btn_text']) ? $opts['submit_btn_text'] : __('Confirmar Reserva', 'hotel-booking-system')); ?>
         </button>
     </div>
@@ -240,6 +318,18 @@ $policies_url = !empty($opts['policies_url']) ? esc_url($opts['policies_url']) :
         </div>
     </noscript>
 </form>
+
+<!-- Loading Overlay -->
+<div id="hbs-loading-overlay" class="hbs-loading-overlay" style="display: none;" role="status" aria-live="assertive">
+    <div class="hbs-loading-content">
+        <div class="hbs-dots-spinner">
+            <span class="hbs-dot"></span>
+            <span class="hbs-dot"></span>
+            <span class="hbs-dot"></span>
+        </div>
+        <p class="hbs-loading-text"><?php echo esc_html__('Enviando tu solicitud...', 'hotel-booking-system'); ?></p>
+    </div>
+</div>
 
 <!-- Loading Overlay -->
 <div id="hbs-loading-overlay" class="hbs-loading-overlay" style="display: none;" role="status" aria-live="assertive">
